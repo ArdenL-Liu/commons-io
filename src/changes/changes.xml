@@ -204,6 +204,12 @@ The <action> type attribute can be add,update,fix,remove.
       <action dev="ggregory" type="fix" due-to="Michael Ernst">
         Fix typos #375.
       </action>
+      <action issue="IO-611" dev="ggregory" type="fix" due-to="Fedor Urvanov">
+        FilenameUtils.normalize javadoc and tests #383.
+      </action>
+      <action issue="IO-611" dev="ggregory" type="fix" due-to="ArdenL-Liu, Bruno P. Kinoshita, Gary Gregory">
+        Better docs in IOUtils and IOUtils.byteArray(int size) #374.
+      </action>
       <!-- ADD -->
       <action type="add" dev="ggregory" due-to="Gary Gregory">
         Add GitHub coverage.yml.
@@ -422,7 +428,7 @@ The <action> type attribute can be add,update,fix,remove.
         Add PathUtils.getLastModifiedFileTime(*).
       </action>
       <action dev="ggregory" type="add" due-to="Gary Gregory">
-        Add IOBiFunction, IOTriFunction, IOQuadFunction, IOPredicate, FilesUncheck.
+        Add IOBiFunction, IOTriFunction, IOQuadFunction, IOPredicate, IOIterator, IOSpliterator, IOBaseStream, IOStream, FilesUncheck.
       </action>
       <action dev="ggregory" type="add" due-to="Gary Gregory">
         Add IOUtils.consume(Reader).
@@ -439,12 +445,15 @@ The <action> type attribute can be add,update,fix,remove.
       <action dev="ggregory" type="add" due-to="Gary Gregory">
         Add TimestampedObserver.isClosed().
       </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        IOExceptionList implements Iterable.
+      </action>
       <!-- UPDATE -->
       <action dev="kinow" type="update" due-to="Dependabot, Gary Gregory">
         Bump actions/cache from 2.1.6 to 3.0.8 #307, #337.
       </action>
-      <action dev="ggregory" type="update" due-to="Dependabot">
-        Bump actions/checkout from 2.3.4 to 3 #286, #298, #330.
+      <action dev="ggregory" type="update" due-to="Dependabot, Gary Gregory">
+        Bump actions/checkout from 2.3.4 to 3.0.2 #286, #298, #330.
       </action>
       <action dev="kinow" type="update" due-to="Dependabot">
         Bump actions/setup-java from 2 to 3 #346.
@@ -456,10 +465,10 @@ The <action> type attribute can be add,update,fix,remove.
         Bump Maven Javadoc plugin from 3.2.0 to 3.4.1.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot">
-        Bump spotbugs-maven-plugin from 4.2.3 to 4.7.1.1 #250, #259, #272, #274, #285, #288, #289, #305, #315, #326, #338, #360, #366, #370.
+        Bump spotbugs-maven-plugin from 4.2.3 to 4.7.2.0 #250, #259, #272, #274, #285, #288, #289, #305, #315, #326, #338, #360, #366, #370, #380.
       </action>
       <action dev="kinow" type="update" due-to="Gary Gregory, Dependabot">
-        Bump spotbugs from 4.5.2 to 4.7.1 #313, #317, #357.
+        Bump spotbugs from 4.5.2 to 4.7.2 #313, #317, #357, #382.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
         Bump JUnit from 5.7.2 to 5.8.2.
@@ -471,10 +480,10 @@ The <action> type attribute can be add,update,fix,remove.
         Bump checkstyle from 8.44 to 9.3 #256, #257, #266, #279, #292. #308.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot">
-        Bump junit-bom from 5.8.0-M1 to 5.9.0 #260, #271, #275, #309.
+        Bump junit-bom from 5.8.0-M1 to 5.9.1 #260, #271, #275, #309, #386.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot, Gary Gregory">
-        Bump mockito-inline from 3.11.2 to 4.7.0 #262, #264, #282, #306, #314, #331, #348, #359.
+        Bump mockito-inline from 3.11.2 to 4.8.0 #262, #264, #282, #306, #314, #331, #348, #359, #381.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot">
         Bump jmh.version from 1.32 to 1.35 #258, #316, #342.
@@ -486,10 +495,10 @@ The <action> type attribute can be add,update,fix,remove.
         Bump junit-pioneer from 1.4.2 to 1.7.1 #304. #335, #362.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
-        Bump japicmp-maven-plugin from 0.15.3 to 0.15.7.
+        Bump japicmp-maven-plugin from 0.15.3 to 0.16.0.
       </action>
-      <action dev="ggregory" type="update" due-to="Gary Gregory">
-        Bump commons-parent from 52 to 53.
+      <action dev="ggregory" type="update" due-to="Gary Gregory, Dependabot">
+        Bump commons-parent from 52 to 54 #388.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
         Bump jacoco-maven-plugin from 0.8.7 to 0.8.8.
@@ -501,10 +510,10 @@ The <action> type attribute can be add,update,fix,remove.
         Bump commons.surefire.version 3.0.0-M5 to 3.0.0-M7.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
-        Bump PMD from 6.44.0 to 6.48.0.
+        Bump PMD from 6.44.0 to 6.49.0.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
-        Bump maven-pmd-plugin from 3.16.0 to 3.18.0.
+        Bump maven-pmd-plugin from 3.16.0 to 3.19.0.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
         Bump apache-rat from 0.13 to 0.14.
@@ -514,6 +523,9 @@ The <action> type attribute can be add,update,fix,remove.
       </action>
       <action dev="kinow" type="update" due-to="Dependabot">
         Bump maven-checkstyle-plugin from 3.1.2 to 3.2.0 #376.
+      </action>
+      <action dev="kinow" type="update" due-to="Dependabot">
+        Bump apache-rat-plugin from 0.14 to 0.15 #387.
       </action>
     </release>
     <release version="2.11.0" date="2021-07-09" description="Java 8 required.">

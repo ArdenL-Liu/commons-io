@@ -17,47 +17,36 @@
 
 package org.apache.commons.io.function;
 
+import java.util.Objects;
+import java.util.stream.BaseStream;
+
 /**
- * Defines package-private constants.
+ * Abstracts an {@link IOBaseStream} implementation.
+ *
+ * Keep package-private for now.
+ *
+ * @param <T> the type of the stream elements.
+ * @param <S> the type of the stream extending {@code IOBaseStream}.
  */
-final class Constants {
+abstract class IOBaseStreamAdapter<T, S extends IOBaseStream<T, S, B>, B extends BaseStream<T, B>> implements IOBaseStream<T, S, B> {
 
     /**
-     * No-op singleton.
+     * The underlying base stream.
      */
-    @SuppressWarnings("rawtypes")
-    static final IOBiConsumer IO_BI_CONSUMER = (t, u) -> {/* No-op */};
+    private final B delegate;
 
     /**
-     * No-op singleton.
+     * Constructs an instance.
+     *
+     * @param delegate the delegate.
      */
-    @SuppressWarnings("rawtypes")
-    static final IOBiFunction IO_BI_FUNCTION = (t, u) -> null;
+    IOBaseStreamAdapter(final B delegate) {
+        this.delegate = Objects.requireNonNull(delegate, "delegate");
+    }
 
-    /**
-     * No-op singleton.
-     */
-    @SuppressWarnings("rawtypes")
-    static final IOFunction IO_FUNCTION_ID = t -> t;
-
-    /**
-     * Always false.
-     */
-    static final IOPredicate<Object> IO_PREDICATE_FALSE = t -> false;
-
-    /**
-     * Always true.
-     */
-    static final IOPredicate<Object> IO_PREDICATE_TRUE = t -> true;
-
-    /**
-     * No-op singleton.
-     */
-    @SuppressWarnings("rawtypes")
-    static final IOTriConsumer IO_TRI_CONSUMER = (t, u, v) -> {/* No-op */};
-
-    private Constants() {
-        // We don't want instances
+    @Override
+    public B unwrap() {
+        return delegate;
     }
 
 }

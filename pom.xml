@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.apache.commons</groupId>
     <artifactId>commons-parent</artifactId>
-    <version>53</version>
+    <version>54</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>commons-io</groupId>
@@ -249,7 +249,7 @@ file comparators, endian transformation classes, and much more.
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.9.0</version>
+        <version>5.9.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -271,7 +271,7 @@ file comparators, endian transformation classes, and much more.
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-inline</artifactId>
-      <version>4.7.0</version>
+      <version>4.8.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -340,13 +340,13 @@ file comparators, endian transformation classes, and much more.
     <checkstyle.impl.version>9.3</checkstyle.impl.version>
     <commons.jacoco.version>0.8.8</commons.jacoco.version>
     <commons.surefire.version>3.0.0-M7</commons.surefire.version>
-    <commons.japicmp.version>0.15.7</commons.japicmp.version>
+    <commons.japicmp.version>0.16.0</commons.japicmp.version>
     <commons.enforcer.version>3.1.0</commons.enforcer.version>
     <commons.moditect.version>1.0.0.RC2</commons.moditect.version>
-    <commons.spotbugs.plugin.version>4.7.1.1</commons.spotbugs.plugin.version>
-    <commons.spotbugs.impl.version>4.7.1</commons.spotbugs.impl.version>
-    <commons.pmd.version>3.18.0</commons.pmd.version>
-    <commons.pmd-impl.version>6.48.0</commons.pmd-impl.version>
+    <commons.spotbugs.plugin.version>4.7.2.0</commons.spotbugs.plugin.version>
+    <commons.spotbugs.impl.version>4.7.2</commons.spotbugs.impl.version>
+    <commons.pmd.version>3.19.0</commons.pmd.version>
+    <commons.pmd-impl.version>6.49.0</commons.pmd-impl.version>
     <jmh.version>1.35</jmh.version>
     <japicmp.skip>false</japicmp.skip>
     <jacoco.skip>${env.JACOCO_SKIP}</jacoco.skip>
@@ -363,7 +363,7 @@ file comparators, endian transformation classes, and much more.
         <plugin>
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
-          <version>0.14</version>
+          <version>0.15</version>
           <configuration>
             <excludes>
               <exclude>src/test/resources/**/*.bin</exclude>
@@ -565,7 +565,7 @@ file comparators, endian transformation classes, and much more.
       </build>
     </profile>
     <profile>
-      <id>java9+</id>
+      <id>java9-compile</id>
       <activation>
         <jdk>[9,)</jdk>
       </activation>
@@ -574,6 +574,16 @@ file comparators, endian transformation classes, and much more.
         <coveralls.skip>true</coveralls.skip>
         <maven.compiler.release>8</maven.compiler.release>
       </properties>
+    </profile>
+    <profile>
+      <id>java9-moditect</id>
+      <activation>
+        <!-- 
+        Fails on Java 11 and Windows:
+        Error:  Failed to execute goal org.moditect:moditect-maven-plugin:1.0.0.RC2:add-module-info (add-module-infos) on project commons-io: Execution add-module-infos of goal org.moditect:moditect-maven-plugin:1.0.0.RC2:add-module-info failed: Couldn't add module-info.class to JAR: D:\a\commons-io\commons-io\target\commons-io-2.12.0-SNAPSHOT.jar: The process cannot access the file because it is being used by another process. -> [Help 1]
+        -->
+        <jdk>[9,11)</jdk>
+      </activation>
       <build>
         <plugins>
           <plugin>
