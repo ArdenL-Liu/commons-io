@@ -459,7 +459,7 @@ The <action> type attribute can be add,update,fix,remove.
         Bump actions/checkout from 2.3.4 to 3.1.0 #286, #298, #330, #392.
       </action>
       <action dev="kinow" type="update" due-to="Dependabot">
-        Bump actions/setup-java from 2 to 3.5.1 #346.
+        Bump actions/setup-java from 2 to 3.6.0 #346, #397.
       </action>
       <action dev="kinow" type="update" due-to="Dependabot">
         Bump github/codeql-action from 1 to 2 #353.
@@ -468,10 +468,10 @@ The <action> type attribute can be add,update,fix,remove.
         Bump Maven Javadoc plugin from 3.2.0 to 3.4.1.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot">
-        Bump spotbugs-maven-plugin from 4.2.3 to 4.7.2.0 #250, #259, #272, #274, #285, #288, #289, #305, #315, #326, #338, #360, #366, #370, #380.
+        Bump spotbugs-maven-plugin from 4.2.3 to 4.7.2.1 #250, #259, #272, #274, #285, #288, #289, #305, #315, #326, #338, #360, #366, #370, #380, #395.
       </action>
       <action dev="kinow" type="update" due-to="Gary Gregory, Dependabot">
-        Bump spotbugs from 4.5.2 to 4.7.2 #313, #317, #357, #382.
+        Bump spotbugs from 4.5.2 to 4.7.3 #313, #317, #357, #382, #398.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
         Bump JUnit from 5.7.2 to 5.8.2.
@@ -486,7 +486,7 @@ The <action> type attribute can be add,update,fix,remove.
         Bump junit-bom from 5.8.0-M1 to 5.9.1 #260, #271, #275, #309, #386.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot, Gary Gregory">
-        Bump mockito-inline from 3.11.2 to 4.8.0 #262, #264, #282, #306, #314, #331, #348, #359, #381.
+        Bump mockito-inline from 3.11.2 to 4.8.1 #262, #264, #282, #306, #314, #331, #348, #359, #381, #399.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot">
         Bump jmh.version from 1.32 to 1.35 #258, #316, #342.
