@@ -468,7 +468,7 @@ The <action> type attribute can be add,update,fix,remove.
         Bump Maven Javadoc plugin from 3.2.0 to 3.4.1.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot">
-        Bump spotbugs-maven-plugin from 4.2.3 to 4.7.2.1 #250, #259, #272, #274, #285, #288, #289, #305, #315, #326, #338, #360, #366, #370, #380, #395.
+        Bump spotbugs-maven-plugin from 4.2.3 to 4.7.3.0 #250, #259, #272, #274, #285, #288, #289, #305, #315, #326, #338, #360, #366, #370, #380, #395, #403.
       </action>
       <action dev="kinow" type="update" due-to="Gary Gregory, Dependabot">
         Bump spotbugs from 4.5.2 to 4.7.3 #313, #317, #357, #382, #398.
@@ -486,16 +486,16 @@ The <action> type attribute can be add,update,fix,remove.
         Bump junit-bom from 5.8.0-M1 to 5.9.1 #260, #271, #275, #309, #386.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot, Gary Gregory">
-        Bump mockito-inline from 3.11.2 to 4.8.1 #262, #264, #282, #306, #314, #331, #348, #359, #381, #399.
+        Bump mockito-inline from 3.11.2 to 4.9.0 #262, #264, #282, #306, #314, #331, #348, #359, #381, #399, #405.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot">
-        Bump jmh.version from 1.32 to 1.35 #258, #316, #342.
+        Bump jmh.version from 1.32 to 1.36 #258, #316, #342, #404.
       </action>
       <action dev="kinow" type="update" due-to="Dependabot">
         Bump moditect-maven-plugin from 1.0.0.RC1 to 1.0.0.RC2 #280.
       </action>
       <action dev="kinow" type="update" due-to="Dependabot, Gary Gregory">
-        Bump junit-pioneer from 1.4.2 to 1.7.1 #304. #335, #362.
+        Bump junit-pioneer from 1.4.2 to 1.9.1 #304. #335, #362, #402, #406, #409.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
         Bump japicmp-maven-plugin from 0.15.3 to 0.16.0.
@@ -513,7 +513,7 @@ The <action> type attribute can be add,update,fix,remove.
         Bump commons.surefire.version 3.0.0-M5 to 3.0.0-M7.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
-        Bump PMD from 6.44.0 to 6.49.0.
+        Bump PMD from 6.44.0 to 6.52.0.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
         Bump maven-pmd-plugin from 3.16.0 to 3.19.0.
