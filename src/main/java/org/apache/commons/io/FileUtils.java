@@ -43,6 +43,8 @@ import java.nio.file.LinkOption;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
@@ -54,7 +56,6 @@ import java.time.chrono.ChronoLocalDate;
 import java.time.chrono.ChronoLocalDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -198,23 +199,6 @@ public class FileUtils {
      * An empty array of type {@link File}.
      */
     public static final File[] EMPTY_FILE_ARRAY = {};
-
-    /**
-     * Copies the given array and adds StandardCopyOption.COPY_ATTRIBUTES.
-     *
-     * @param copyOptions sorted copy options.
-     * @return a new array.
-     */
-    private static CopyOption[] addCopyAttributes(final CopyOption... copyOptions) {
-        // Make a copy first since we don't want to sort the call site's version.
-        final CopyOption[] actual = Arrays.copyOf(copyOptions, copyOptions.length + 1);
-        Arrays.sort(actual, 0, copyOptions.length);
-        if (Arrays.binarySearch(copyOptions, 0, copyOptions.length, StandardCopyOption.COPY_ATTRIBUTES) >= 0) {
-            return copyOptions;
-        }
-        actual[actual.length - 1] = StandardCopyOption.COPY_ATTRIBUTES;
-        return actual;
-    }
 
     /**
      * Returns a human-readable version of the file size, where the input represents a specific number of bytes.
@@ -489,9 +473,10 @@ public class FileUtils {
      * method merges the source with the destination, with the source taking precedence.
      * </p>
      * <p>
-     * <strong>Note:</strong> This method tries to preserve the files' last modified date/times using
-     * {@link File#setLastModified(long)}, however it is not guaranteed that those operations will succeed. If the
-     * modification operation fails, the methods throws IOException.
+     * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the file's last
+     * modified date/times using {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is
+     * not guaranteed that the operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      *
      * @param srcDir an existing directory to copy, must not be {@code null}.
@@ -594,9 +579,10 @@ public class FileUtils {
      * method merges the source with the destination, with the source taking precedence.
      * </p>
      * <p>
-     * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the files' last
-     * modified date/times using {@link File#setLastModified(long)}, however it is not guaranteed that those operations
-     * will succeed. If the modification operation fails, the methods throws IOException.
+     * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the file's last
+     * modified date/times using {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is
+     * not guaranteed that the operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      * <b>Example: Copy directories only</b>
      *
@@ -643,9 +629,10 @@ public class FileUtils {
      * method merges the source with the destination, with the source taking precedence.
      * </p>
      * <p>
-     * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the files' last
-     * modified date/times using {@link File#setLastModified(long)}, however it is not guaranteed that those operations
-     * will succeed. If the modification operation fails, the methods throws IOException.
+     * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the file's last
+     * modified date/times using {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is
+     * not guaranteed that the operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      * <b>Example: Copy directories only</b>
      *
@@ -698,7 +685,7 @@ public class FileUtils {
                 }
             }
         }
-        doCopyDirectory(srcDir, destDir, fileFilter, exclusionList, preserveFileDate, preserveFileDate ? addCopyAttributes(copyOptions) : copyOptions);
+        doCopyDirectory(srcDir, destDir, fileFilter, exclusionList, preserveFileDate, copyOptions);
     }
 
     /**
@@ -712,9 +699,10 @@ public class FileUtils {
      * method merges the source with the destination, with the source taking precedence.
      * </p>
      * <p>
-     * <strong>Note:</strong> This method tries to preserve the files' last modified date/times using
-     * {@link File#setLastModified(long)}, however it is not guaranteed that those operations will succeed. If the
-     * modification operation fails, the methods throws IOException.
+     * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the file's last
+     * modified date/times using {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is
+     * not guaranteed that the operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      *
      * @param sourceDir an existing directory to copy, must not be {@code null}.
@@ -740,8 +728,9 @@ public class FileUtils {
      * </p>
      * <p>
      * <strong>Note:</strong> This method tries to preserve the file's last modified date/times using
-     * {@link StandardCopyOption#COPY_ATTRIBUTES}, however it is not guaranteed that the operation will succeed. If the
-     * modification operation fails, the methods throws IOException.
+     * {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is not guaranteed that the
+     * operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      *
      * @param srcFile an existing file to copy, must not be {@code null}.
@@ -754,7 +743,7 @@ public class FileUtils {
      * @see #copyFile(File, File, boolean)
      */
     public static void copyFile(final File srcFile, final File destFile) throws IOException {
-        copyFile(srcFile, destFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+        copyFile(srcFile, destFile, StandardCopyOption.REPLACE_EXISTING);
     }
 
     /**
@@ -766,8 +755,9 @@ public class FileUtils {
      * </p>
      * <p>
      * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the file's last
-     * modified date/times using {@link StandardCopyOption#COPY_ATTRIBUTES}, however it is not guaranteed that the operation
-     * will succeed. If the modification operation fails, the methods throws IOException.
+     * modified date/times using {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is
+     * not guaranteed that the operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      *
      * @param srcFile an existing file to copy, must not be {@code null}.
@@ -780,11 +770,7 @@ public class FileUtils {
      * @see #copyFile(File, File, boolean, CopyOption...)
      */
     public static void copyFile(final File srcFile, final File destFile, final boolean preserveFileDate) throws IOException {
-        // @formatter:off
-        copyFile(srcFile, destFile, preserveFileDate
-                ? new CopyOption[] {StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING}
-                : new CopyOption[] {StandardCopyOption.REPLACE_EXISTING});
-        // @formatter:on
+        copyFile(srcFile, destFile, preserveFileDate, StandardCopyOption.REPLACE_EXISTING);
     }
 
     /**
@@ -796,8 +782,9 @@ public class FileUtils {
      * </p>
      * <p>
      * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the file's last
-     * modified date/times using {@link StandardCopyOption#COPY_ATTRIBUTES}, however it is not guaranteed that the operation
-     * will succeed. If the modification operation fails, the methods throws IOException.
+     * modified date/times using {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is
+     * not guaranteed that the operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      *
      * @param srcFile an existing file to copy, must not be {@code null}.
@@ -813,7 +800,20 @@ public class FileUtils {
      * @since 2.8.0
      */
     public static void copyFile(final File srcFile, final File destFile, final boolean preserveFileDate, final CopyOption... copyOptions) throws IOException {
-        copyFile(srcFile, destFile, preserveFileDate ? addCopyAttributes(copyOptions) : copyOptions);
+        requireFileCopy(srcFile, destFile);
+        requireFile(srcFile, "srcFile");
+        requireCanonicalPathsNotEquals(srcFile, destFile);
+        createParentDirectories(destFile);
+        requireFileIfExists(destFile, "destFile");
+        if (destFile.exists()) {
+            requireCanWrite(destFile, "destFile");
+        }
+        Files.copy(srcFile.toPath(), destFile.toPath(), copyOptions);
+
+        // On Windows, the last modified time is copied by default.
+        if (preserveFileDate && !setTimes(srcFile, destFile)) {
+            throw new IOException("Cannot set the file time.");
+        }
     }
 
     /**
@@ -835,16 +835,7 @@ public class FileUtils {
      * @since 2.9.0
      */
     public static void copyFile(final File srcFile, final File destFile, final CopyOption... copyOptions) throws IOException {
-        requireFileCopy(srcFile, destFile);
-        requireFile(srcFile, "srcFile");
-        requireCanonicalPathsNotEquals(srcFile, destFile);
-        createParentDirectories(destFile);
-        requireFileIfExists(destFile, "destFile");
-        if (destFile.exists()) {
-            requireCanWrite(destFile, "destFile");
-        }
-        // On Windows, the last modified time is copied by default.
-        Files.copy(srcFile.toPath(), destFile.toPath(), copyOptions);
+        copyFile(srcFile, destFile, true, copyOptions);
     }
 
     /**
@@ -876,8 +867,9 @@ public class FileUtils {
      * </p>
      * <p>
      * <strong>Note:</strong> This method tries to preserve the file's last modified date/times using
-     * {@link StandardCopyOption#COPY_ATTRIBUTES}, however it is not guaranteed that the operation will succeed. If the
-     * modification operation fails, the methods throws IOException.
+     * {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is not guaranteed that the
+     * operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      *
      * @param srcFile an existing file to copy, must not be {@code null}.
@@ -900,8 +892,9 @@ public class FileUtils {
      * </p>
      * <p>
      * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the file's last
-     * modified date/times using {@link StandardCopyOption#COPY_ATTRIBUTES}, however it is not guaranteed that the operation
-     * will succeed. If the modification operation fails, the methods throws IOException.
+     * modified date/times using {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is
+     * not guaranteed that the operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      *
      * @param sourceFile an existing file to copy, must not be {@code null}.
@@ -957,10 +950,10 @@ public class FileUtils {
      * merges the source with the destination, with the source taking precedence.
      * </p>
      * <p>
-     * <strong>Note:</strong> This method tries to preserve the files' last modified date/times using
-     * {@link StandardCopyOption#COPY_ATTRIBUTES} or {@link File#setLastModified(long)} depending on the input, however it
-     * is not guaranteed that those operations will succeed. If the modification operation fails, the methods throws
-     * IOException.
+     * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the file's last
+     * modified date/times using {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is
+     * not guaranteed that the operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      *
      * @param sourceFile an existing file or directory to copy, must not be {@code null}.
@@ -993,10 +986,10 @@ public class FileUtils {
      * If the destination file exists, then this method will overwrite it.
      * </p>
      * <p>
-     * <strong>Note:</strong> This method tries to preserve the file's last
-     * modified date/times using {@link File#setLastModified(long)}, however
-     * it is not guaranteed that the operation will succeed.
-     * If the modification operation fails, the methods throws IOException.
+     * <strong>Note:</strong> Setting {@code preserveFileDate} to {@code true} tries to preserve the file's last
+     * modified date/times using {@link BasicFileAttributeView#setTimes(FileTime, FileTime, FileTime)}, however it is
+     * not guaranteed that the operation will succeed. If the modification operation fails it will fallback to
+     * {@link File#setLastModified(long)} and if that fails, the methods throws IOException.
      * </p>
      *
      * @param sourceIterable  existing files to copy, must not be {@code null}.
@@ -1059,11 +1052,9 @@ public class FileUtils {
      * @throws IOException if an IO error occurs during copying
      */
     public static void copyURLToFile(final URL source, final File destination) throws IOException {
-        try (InputStream stream = source.openStream()) {
-            final Path path = destination.toPath();
-            PathUtils.createParentDirectories(path);
-            Files.copy(stream, path, StandardCopyOption.REPLACE_EXISTING);
-        }
+        final Path path = destination.toPath();
+        PathUtils.createParentDirectories(path);
+        PathUtils.copy(source::openStream, path, StandardCopyOption.REPLACE_EXISTING);
     }
 
     /**
@@ -1097,12 +1088,13 @@ public class FileUtils {
     }
 
     /**
-     * Creates all parent directories for a File object.
+     * Creates all parent directories for a File object, including any necessary but non-existent parent directories. If a parent directory already exists or
+     * is null, nothing happens.
      *
      * @param file the File that may need parents, may be null.
-     * @return The parent directory, or {@code null} if the given file does not name a parent
-     * @throws IOException if the directory was not created along with all its parent directories.
-     * @throws IOException if the given file object is not null and not a directory.
+     * @return The parent directory, or {@code null} if the given File does have a parent.
+     * @throws IOException       if the directory was not created along with all its parent directories.
+     * @throws SecurityException See {@link File#mkdirs()}.
      * @since 2.9.0
      */
     public static File createParentDirectories(final File file) throws IOException {
@@ -1288,7 +1280,8 @@ public class FileUtils {
     }
 
     /**
-     * Internal copy directory method.
+     * Internal copy directory method. Creates all destination parent directories,
+     * including any necessary but non-existent parent directories.
      *
      * @param srcDir the validated source directory, must not be {@code null}.
      * @param destDir the validated destination directory, must not be {@code null}.
@@ -1297,7 +1290,7 @@ public class FileUtils {
      * @param preserveDirDate preserve the directories last modified dates.
      * @param copyOptions options specifying how the copy should be done, see {@link StandardCopyOption}.
      * @throws IOException if the directory was not created along with all its parent directories.
-     * @throws IOException if the given file object is not a directory.
+     * @throws SecurityException See {@link File#mkdirs()}.
      */
     private static void doCopyDirectory(final File srcDir, final File destDir, final FileFilter fileFilter, final List<String> exclusionList,
         final boolean preserveDirDate, final CopyOption... copyOptions) throws IOException {
@@ -1312,13 +1305,13 @@ public class FileUtils {
                 if (srcFile.isDirectory()) {
                     doCopyDirectory(srcFile, dstFile, fileFilter, exclusionList, preserveDirDate, copyOptions);
                 } else {
-                    copyFile(srcFile, dstFile, copyOptions);
+                    copyFile(srcFile, dstFile, preserveDirDate, copyOptions);
                 }
             }
         }
         // Do this last, as the above has probably affected directory metadata
         if (preserveDirDate) {
-            setLastModified(srcDir, destDir);
+            setTimes(srcDir, destDir);
         }
     }
 
@@ -1371,33 +1364,38 @@ public class FileUtils {
     }
 
     /**
-     * Makes a directory, including any necessary but nonexistent parent
-     * directories. If a file already exists with specified name but it is
-     * not a directory then an IOException is thrown.
-     * If the directory cannot be created (or the file already exists but is not a directory)
-     * then an IOException is thrown.
+     * Creates all directories for a File object, including any necessary but non-existent parent directories. If the {@code directory} already exists or is
+     * null, nothing happens.
+     * <p>
+     * Calls {@link File#mkdirs()} and throws an {@link IOException} on failure.
+     * </p>
      *
-     * @param directory directory to create, may be {@code null}.
-     * @throws IOException if the directory was not created along with all its parent directories.
-     * @throws IOException if the given file object is not a directory.
+     * @param directory the receiver for {@code mkdirs()}. If the {@code directory} already exists or is null, nothing happens.
+     * @throws IOException       if the directory was not created along with all its parent directories.
+     * @throws IOException       if the given file object is not a directory.
      * @throws SecurityException See {@link File#mkdirs()}.
+     * @see File#mkdirs()
      */
     public static void forceMkdir(final File directory) throws IOException {
         mkdirs(directory);
     }
 
     /**
-     * Makes any necessary but nonexistent parent directories for a given File. If the parent directory cannot be
-     * created then an IOException is thrown.
+     * Creates all directories for a File object, including any necessary but non-existent parent directories. If the parent directory already exists or is
+     * null, nothing happens.
+     * <p>
+     * Calls {@link File#mkdirs()} for the parent of @{code file}.
+     * </p>
      *
-     * @param file file with parent to create, must not be {@code null}.
+     * @param file file with parents to create, must not be {@code null}.
      * @throws NullPointerException if the file is {@code null}.
-     * @throws IOException          if the parent directory cannot be created.
+     * @throws IOException          if the directory was not created along with all its parent directories.
+     * @throws SecurityException    See {@link File#mkdirs()}.
+     * @see File#mkdirs()
      * @since 2.5
      */
     public static void forceMkdirParent(final File file) throws IOException {
-        Objects.requireNonNull(file, "file");
-        forceMkdir(getParentFile(file));
+        forceMkdir(getParentFile(Objects.requireNonNull(file, "file")));
     }
 
     /**
@@ -1439,10 +1437,10 @@ public class FileUtils {
     }
 
     /**
-     * Gets the parent of the given file. The given file may be bull and a file's parent may as well be null.
+     * Gets the parent of the given file. The given file may be null. Note that a file's parent may be null as well.
      *
-     * @param file The file to query.
-     * @return The parent file or {@code null}.
+     * @param file The file to query, may be null.
+     * @return The parent file or {@code null}. Note that a file's parent may be null as well.
      */
     private static File getParentFile(final File file) {
         return file == null ? null : file.getParentFile();
@@ -2270,12 +2268,16 @@ public class FileUtils {
     }
 
     /**
-     * Calls {@link File#mkdirs()} and throws an exception on failure.
+     * Calls {@link File#mkdirs()} and throws an {@link IOException} on failure.
+     * <p>
+     * Creates all directories for a File object, including any necessary but non-existent parent directories. If the {@code directory} already exists or is
+     * null, nothing happens.
+     * </p>
      *
-     * @param directory the receiver for {@code mkdirs()}, may be null.
-     * @return the given file, may be null.
-     * @throws IOException if the directory was not created along with all its parent directories.
-     * @throws IOException if the given file object is not a directory.
+     * @param directory the receiver for {@code mkdirs()}. If the {@code directory} already exists or is null, nothing happens.
+     * @return the given directory.
+     * @throws IOException       if the directory was not created along with all its parent directories.
+     * @throws IOException       if the given file object is not a directory.
      * @throws SecurityException See {@link File#mkdirs()}.
      * @see File#mkdirs()
      */
@@ -2319,6 +2321,9 @@ public class FileUtils {
 
     /**
      * Moves a directory to another directory.
+     * <p>
+     * If {@code createDestDir} is true, creates all destination parent directories, including any necessary but non-existent parent directories.
+     * </p>
      *
      * @param source the file to be moved.
      * @param destDir the destination file.
@@ -2327,7 +2332,9 @@ public class FileUtils {
      * @throws NullPointerException if any of the given {@link File}s are {@code null}.
      * @throws IllegalArgumentException if the source or destination is invalid.
      * @throws FileNotFoundException if the source does not exist.
+     * @throws IOException if the directory was not created along with all its parent directories, if enabled.
      * @throws IOException if an error occurs or setting the last-modified time didn't succeed.
+     * @throws SecurityException See {@link File#mkdirs()}.
      * @since 1.4
      */
     public static void moveDirectoryToDirectory(final File source, final File destDir, final boolean createDestDir) throws IOException {
@@ -2388,7 +2395,8 @@ public class FileUtils {
         requireAbsent(destFile, "destFile");
         final boolean rename = srcFile.renameTo(destFile);
         if (!rename) {
-            copyFile(srcFile, destFile, copyOptions);
+            // Don't interfere with file date on move, handled by StandardCopyOption.COPY_ATTRIBUTES
+            copyFile(srcFile, destFile, false, copyOptions);
             if (!srcFile.delete()) {
                 FileUtils.deleteQuietly(destFile);
                 throw new IOException("Failed to delete original file '" + srcFile + "' after copy to '" + destFile + "'");
@@ -2398,6 +2406,9 @@ public class FileUtils {
 
     /**
      * Moves a file to a directory.
+     * <p>
+     * If {@code createDestDir} is true, creates all destination parent directories, including any necessary but non-existent parent directories.
+     * </p>
      *
      * @param srcFile the file to be moved.
      * @param destDir the destination file.
@@ -2407,7 +2418,9 @@ public class FileUtils {
      * @throws FileExistsException if the destination file exists.
      * @throws FileNotFoundException if the source file does not exist.
      * @throws IOException if source or destination is invalid.
+     * @throws IOException if the directory was not created along with all its parent directories, if enabled.
      * @throws IOException if an error occurs or setting the last-modified time didn't succeed.
+     * @throws SecurityException See {@link File#mkdirs()}.
      * @since 1.4
      */
     public static void moveFileToDirectory(final File srcFile, final File destDir, final boolean createDestDir) throws IOException {
@@ -2421,20 +2434,22 @@ public class FileUtils {
     }
 
     /**
-     * Moves a file or directory to the destination directory.
+     * Moves a file or directory to a destination directory.
+     * <p>
+     * If {@code createDestDir} is true, creates all destination parent directories, including any necessary but non-existent parent directories.
+     * </p>
      * <p>
      * When the destination is on another file system, do a "copy and delete".
      * </p>
      *
-     * @param src the file or directory to be moved.
-     * @param destDir the destination directory.
-     * @param createDestDir If {@code true} create the destination directory, otherwise if {@code false} throw an
-     *        IOException.
-     * @throws NullPointerException if any of the given {@link File}s are {@code null}.
-     * @throws FileExistsException if the directory or file exists in the destination directory.
+     * @param src           the file or directory to be moved.
+     * @param destDir       the destination directory.
+     * @param createDestDir If {@code true} create the destination directory, otherwise if {@code false} throw an IOException.
+     * @throws NullPointerException  if any of the given {@link File}s are {@code null}.
+     * @throws FileExistsException   if the directory or file exists in the destination directory.
      * @throws FileNotFoundException if the source file does not exist.
-     * @throws IOException if source or destination is invalid.
-     * @throws IOException if an error occurs or setting the last-modified time didn't succeed.
+     * @throws IOException           if source or destination is invalid.
+     * @throws IOException           if an error occurs or setting the last-modified time didn't succeed.
      * @since 1.4
      */
     public static void moveToDirectory(final File src, final File destDir, final boolean createDestDir) throws IOException {
@@ -2597,9 +2612,7 @@ public class FileUtils {
      * @since 2.3
      */
     public static String readFileToString(final File file, final Charset charsetName) throws IOException {
-        try (InputStream inputStream = Files.newInputStream(file.toPath())) {
-            return IOUtils.toString(inputStream, Charsets.toCharset(charsetName));
-        }
+        return IOUtils.toString(() -> Files.newInputStream(file.toPath()), Charsets.toCharset(charsetName));
     }
 
     /**
@@ -2840,37 +2853,33 @@ public class FileUtils {
     }
 
     /**
-     * Sets the given {@code targetFile}'s last modified date to the value from {@code sourceFile}.
+     * Set file lastModifiedTime, lastAccessTime and creationTime to match source file
      *
      * @param sourceFile The source file to query.
      * @param targetFile The target file or directory to set.
+     * @return {@code true} if and only if the operation succeeded;
+     *          {@code false} otherwise
      * @throws NullPointerException if sourceFile is {@code null}.
      * @throws NullPointerException if targetFile is {@code null}.
      * @throws IOException if setting the last-modified time failed.
      */
-    private static void setLastModified(final File sourceFile, final File targetFile) throws IOException {
+    private static boolean setTimes(final File sourceFile, final File targetFile) throws IOException {
         Objects.requireNonNull(sourceFile, "sourceFile");
         Objects.requireNonNull(targetFile, "targetFile");
-        if (targetFile.isFile()) {
-            PathUtils.setLastModifiedTime(targetFile.toPath(), sourceFile.toPath());
-        } else {
-            setLastModified(targetFile, lastModified(sourceFile));
+        try {
+            // Set creation, modified, last accessed to match source file
+            final BasicFileAttributes srcAttr = Files.readAttributes(sourceFile.toPath(), BasicFileAttributes.class);
+            final BasicFileAttributeView destAttrView = Files.getFileAttributeView(targetFile.toPath(), BasicFileAttributeView.class);
+            // null guards are not needed; BasicFileAttributes.setTimes(...) is null safe
+            destAttrView.setTimes(srcAttr.lastModifiedTime(), srcAttr.lastAccessTime(), srcAttr.creationTime());
+            return true;
+        } catch (IOException ignored) {
+            // Fallback: Only set modified time to match source file
+            return targetFile.setLastModified(sourceFile.lastModified());
         }
-    }
 
-    /**
-     * Sets the given {@code targetFile}'s last modified date to the given value.
-     *
-     * @param file The source file to query.
-     * @param timeMillis The new last-modified time, measured in milliseconds since the epoch 01-01-1970 GMT.
-     * @throws NullPointerException if file is {@code null}.
-     * @throws IOException if setting the last-modified time failed.
-     */
-    private static void setLastModified(final File file, final long timeMillis) throws IOException {
-        Objects.requireNonNull(file, "file");
-        if (!file.setLastModified(timeMillis)) {
-            throw new IOException(String.format("Failed setLastModified(%s) on '%s'", timeMillis, file));
-        }
+        // TODO: (Help!) Determine historically why setLastModified(File, File) needed PathUtils.setLastModifiedTime() if
+        //  sourceFile.isFile() was true, but needed setLastModifiedTime(File, long) if sourceFile.isFile() was false
     }
 
     /**
@@ -3110,6 +3119,7 @@ public class FileUtils {
      *
      * @param source      the file or directory to be moved.
      * @param destination the destination file or directory.
+     * @throws NullPointerException if any of the given {@link File}s are {@code null}.
      * @throws FileNotFoundException if the source file does not exist.
      */
     private static void validateMoveParameters(final File source, final File destination) throws FileNotFoundException {

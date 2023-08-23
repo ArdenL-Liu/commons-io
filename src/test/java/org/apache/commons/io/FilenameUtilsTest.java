@@ -26,6 +26,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,61 +38,60 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * This is used to test FilenameUtils for correctness.
- *
- * @see FilenameUtils
+ * Tests {@link FilenameUtils}.
  */
 public class FilenameUtilsTest {
 
     private static final String SEP = "" + File.separatorChar;
 
     private static final boolean WINDOWS = File.separatorChar == '\\';
-    @TempDir
-    public File temporaryFolder;
 
-    private File testFile1;
-    private File testFile2;
+    @TempDir
+    public Path temporaryFolder;
+
+    private Path testFile1;
+    private Path testFile2;
 
     private int testFile1Size;
     private int testFile2Size;
 
     @BeforeEach
     public void setUp() throws Exception {
-        testFile1 = File.createTempFile("test", "1", temporaryFolder);
-        testFile2 = File.createTempFile("test", "2", temporaryFolder);
+        testFile1 = Files.createTempFile(temporaryFolder, "test", "1");
+        testFile2 = Files.createTempFile(temporaryFolder, "test", "2");
 
-        testFile1Size = (int) testFile1.length();
-        testFile2Size = (int) testFile2.length();
-        if (!testFile1.getParentFile().exists()) {
+        testFile1Size = (int) Files.size(testFile1);
+        testFile2Size = (int) Files.size(testFile2);
+        if (!Files.exists(testFile1.getParent())) {
             throw new IOException("Cannot create file " + testFile1
                     + " as the parent directory does not exist");
         }
         try (BufferedOutputStream output3 =
-                new BufferedOutputStream(Files.newOutputStream(testFile1.toPath()))) {
+                new BufferedOutputStream(Files.newOutputStream(testFile1))) {
             TestUtils.generateTestData(output3, testFile1Size);
         }
-        if (!testFile2.getParentFile().exists()) {
+        if (!Files.exists(testFile2.getParent())) {
             throw new IOException("Cannot create file " + testFile2
                     + " as the parent directory does not exist");
         }
         try (BufferedOutputStream output2 =
-                new BufferedOutputStream(Files.newOutputStream(testFile2.toPath()))) {
+                new BufferedOutputStream(Files.newOutputStream(testFile2))) {
             TestUtils.generateTestData(output2, testFile2Size);
         }
-        if (!testFile1.getParentFile().exists()) {
+        if (!Files.exists(testFile1.getParent())) {
             throw new IOException("Cannot create file " + testFile1
                     + " as the parent directory does not exist");
         }
         try (BufferedOutputStream output1 =
-                new BufferedOutputStream(Files.newOutputStream(testFile1.toPath()))) {
+                new BufferedOutputStream(Files.newOutputStream(testFile1))) {
             TestUtils.generateTestData(output1, testFile1Size);
         }
-        if (!testFile2.getParentFile().exists()) {
+        if (!Files.exists(testFile2.getParent())) {
             throw new IOException("Cannot create file " + testFile2
                     + " as the parent directory does not exist");
         }
         try (BufferedOutputStream output =
-                new BufferedOutputStream(Files.newOutputStream(testFile2.toPath()))) {
+                new BufferedOutputStream(Files.newOutputStream(testFile2))) {
             TestUtils.generateTestData(output, testFile2Size);
         }
     }
@@ -218,7 +218,7 @@ public class FilenameUtilsTest {
     @Test
     public void testGetBaseName() {
         assertNull(FilenameUtils.getBaseName(null));
-        assertEquals("noseperator", FilenameUtils.getBaseName("noseperator.inthispath"));
+        assertEquals("noseparator", FilenameUtils.getBaseName("noseparator.inthispath"));
         assertEquals("c", FilenameUtils.getBaseName("a/b/c.txt"));
         assertEquals("c", FilenameUtils.getBaseName("a/b/c"));
         assertEquals("", FilenameUtils.getBaseName("a/b/c/"));
@@ -264,7 +264,7 @@ public class FilenameUtilsTest {
     @Test
     public void testGetFullPath() {
         assertNull(FilenameUtils.getFullPath(null));
-        assertEquals("", FilenameUtils.getFullPath("noseperator.inthispath"));
+        assertEquals("", FilenameUtils.getFullPath("noseparator.inthispath"));
         assertEquals("a/b/", FilenameUtils.getFullPath("a/b/c.txt"));
         assertEquals("a/b/", FilenameUtils.getFullPath("a/b/c"));
         assertEquals("a/b/c/", FilenameUtils.getFullPath("a/b/c/"));
@@ -306,7 +306,7 @@ public class FilenameUtilsTest {
     @Test
     public void testGetFullPathNoEndSeparator() {
         assertNull(FilenameUtils.getFullPathNoEndSeparator(null));
-        assertEquals("", FilenameUtils.getFullPathNoEndSeparator("noseperator.inthispath"));
+        assertEquals("", FilenameUtils.getFullPathNoEndSeparator("noseparator.inthispath"));
         assertEquals("a/b", FilenameUtils.getFullPathNoEndSeparator("a/b/c.txt"));
         assertEquals("a/b", FilenameUtils.getFullPathNoEndSeparator("a/b/c"));
         assertEquals("a/b/c", FilenameUtils.getFullPathNoEndSeparator("a/b/c/"));
@@ -367,7 +367,7 @@ public class FilenameUtilsTest {
     @Test
     public void testGetName() {
         assertNull(FilenameUtils.getName(null));
-        assertEquals("noseperator.inthispath", FilenameUtils.getName("noseperator.inthispath"));
+        assertEquals("noseparator.inthispath", FilenameUtils.getName("noseparator.inthispath"));
         assertEquals("c.txt", FilenameUtils.getName("a/b/c.txt"));
         assertEquals("c", FilenameUtils.getName("a/b/c"));
         assertEquals("", FilenameUtils.getName("a/b/c/"));
@@ -377,9 +377,9 @@ public class FilenameUtilsTest {
     @Test
     public void testGetPath() {
         assertNull(FilenameUtils.getPath(null));
-        assertEquals("", FilenameUtils.getPath("noseperator.inthispath"));
-        assertEquals("", FilenameUtils.getPath("/noseperator.inthispath"));
-        assertEquals("", FilenameUtils.getPath("\\noseperator.inthispath"));
+        assertEquals("", FilenameUtils.getPath("noseparator.inthispath"));
+        assertEquals("", FilenameUtils.getPath("/noseparator.inthispath"));
+        assertEquals("", FilenameUtils.getPath("\\noseparator.inthispath"));
         assertEquals("a/b/", FilenameUtils.getPath("a/b/c.txt"));
         assertEquals("a/b/", FilenameUtils.getPath("a/b/c"));
         assertEquals("a/b/c/", FilenameUtils.getPath("a/b/c/"));
@@ -420,9 +420,9 @@ public class FilenameUtilsTest {
     @Test
     public void testGetPathNoEndSeparator() {
         assertNull(FilenameUtils.getPath(null));
-        assertEquals("", FilenameUtils.getPath("noseperator.inthispath"));
-        assertEquals("", FilenameUtils.getPathNoEndSeparator("/noseperator.inthispath"));
-        assertEquals("", FilenameUtils.getPathNoEndSeparator("\\noseperator.inthispath"));
+        assertEquals("", FilenameUtils.getPath("noseparator.inthispath"));
+        assertEquals("", FilenameUtils.getPathNoEndSeparator("/noseparator.inthispath"));
+        assertEquals("", FilenameUtils.getPathNoEndSeparator("\\noseparator.inthispath"));
         assertEquals("a/b", FilenameUtils.getPathNoEndSeparator("a/b/c.txt"));
         assertEquals("a/b", FilenameUtils.getPathNoEndSeparator("a/b/c"));
         assertEquals("a/b/c", FilenameUtils.getPathNoEndSeparator("a/b/c/"));
@@ -601,7 +601,7 @@ public class FilenameUtilsTest {
     @Test
     public void testIndexOfLastSeparator() {
         assertEquals(-1, FilenameUtils.indexOfLastSeparator(null));
-        assertEquals(-1, FilenameUtils.indexOfLastSeparator("noseperator.inthispath"));
+        assertEquals(-1, FilenameUtils.indexOfLastSeparator("noseparator.inthispath"));
         assertEquals(3, FilenameUtils.indexOfLastSeparator("a/b/c"));
         assertEquals(3, FilenameUtils.indexOfLastSeparator("a\\b\\c"));
     }

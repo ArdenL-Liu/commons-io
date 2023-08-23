@@ -33,15 +33,15 @@ public class XmlStreamReaderUtilitiesTest {
     /** Mock {@link XmlStreamReader} implementation */
     private static class MockXmlStreamReader extends XmlStreamReader {
         MockXmlStreamReader(final String defaultEncoding) throws IOException {
-            super(new StringInputStream(), null, true, defaultEncoding);
+            super(CharSequenceInputStream.builder().setCharSequence("").get(), null, true, defaultEncoding);
         }
     }
     private static final String RAWMGS1 = "encoding mismatch";
     private static final String RAWMGS2 = "unknown BOM";
-    private static final String HTTPMGS1 = "BOM must be NULL";
+    private static final String HTTPMGS1 = "BOM must be null";
     private static final String HTTPMGS2 = "encoding mismatch";
 
-    private static final String HTTPMGS3 = "Invalid MIME";
+    private static final String HTTPMGS3 = "Illegal MIME";
     private static final String APPXML         = "application/xml";
     private static final String APPXML_UTF8    = "application/xml;charset=UTF-8";
     private static final String APPXML_UTF16   = "application/xml;charset=UTF-16";
@@ -100,7 +100,7 @@ public class XmlStreamReaderUtilitiesTest {
             checkHttpEncoding("XmlStreamReaderException", lenient, httpContentType, bomEnc, xmlGuessEnc, xmlEnc, defaultEncoding);
             fail("Expected XmlStreamReaderException");
         } catch (final XmlStreamReaderException e) {
-            assertTrue(e.getMessage().startsWith("Invalid encoding"), "Msg Start: " + e.getMessage());
+            assertTrue(e.getMessage().startsWith("Illegal encoding"), "Msg Start: " + e.getMessage());
             assertTrue(e.getMessage().endsWith(msgSuffix), "Msg End: " + e.getMessage());
             assertEquals(bomEnc, e.getBomEncoding(), "bomEnc");
             assertEquals(xmlGuessEnc, e.getXmlGuessEncoding(), "xmlGuessEnc");
@@ -121,7 +121,7 @@ public class XmlStreamReaderUtilitiesTest {
         builder.append("xmlGuessEnc=[").append(xmlGuessEnc).append("], ");
         builder.append("xmlEnc=[").append(xmlEnc).append("], ");
         builder.append("defaultEncoding=[").append(defaultEncoding).append("],");
-        final String encoding = calculateRawEncoding(bomEnc,xmlGuessEnc,xmlEnc, defaultEncoding);
+        final String encoding = calculateRawEncoding(bomEnc, xmlGuessEnc, xmlEnc, defaultEncoding);
         assertEquals(expected, encoding, builder.toString());
     }
 
@@ -131,7 +131,7 @@ public class XmlStreamReaderUtilitiesTest {
             checkRawEncoding("XmlStreamReaderException", bomEnc, xmlGuessEnc, xmlEnc, defaultEncoding);
             fail("Expected XmlStreamReaderException");
         } catch (final XmlStreamReaderException e) {
-            assertTrue(e.getMessage().startsWith("Invalid encoding"), "Msg Start: " + e.getMessage());
+            assertTrue(e.getMessage().startsWith("Illegal encoding"), "Msg Start: " + e.getMessage());
             assertTrue(e.getMessage().endsWith(msgSuffix), "Msg End: "   + e.getMessage());
             assertEquals(bomEnc, e.getBomEncoding(), "bomEnc");
             assertEquals(xmlGuessEnc, e.getXmlGuessEncoding(), "xmlGuessEnc");

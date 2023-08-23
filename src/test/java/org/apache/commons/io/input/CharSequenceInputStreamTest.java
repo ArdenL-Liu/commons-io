@@ -19,11 +19,13 @@ package org.apache.commons.io.input;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
@@ -184,6 +186,9 @@ public class CharSequenceInputStreamTest {
         try (InputStream stream = new CharSequenceInputStream(new String(inputChars), charset, 512)) {
             IOUtils.toCharArray(stream, charset);
         }
+        try (InputStream stream = CharSequenceInputStream.builder().setCharSequence(new String(inputChars)).setCharset(charset).setBufferSize(512).get()) {
+            IOUtils.toCharArray(stream, charset);
+        }
     }
 
     @Test
@@ -338,7 +343,11 @@ public class CharSequenceInputStreamTest {
 
     @Test
     public void testMarkSupported() throws Exception {
-        try (InputStream r = new CharSequenceInputStream("test", UTF_8)) {
+        try (@SuppressWarnings("deprecation")
+        InputStream r = new CharSequenceInputStream("test", UTF_8)) {
+            assertTrue(r.markSupported());
+        }
+        try (InputStream r = CharSequenceInputStream.builder().setCharSequence("test").setCharset(UTF_8).get()) {
             assertTrue(r.markSupported());
         }
     }
@@ -349,11 +358,19 @@ public class CharSequenceInputStreamTest {
             IOUtils.toByteArray(in);
             assertEquals(Charset.defaultCharset(), in.getCharsetEncoder().charset());
         }
+        try (CharSequenceInputStream in = CharSequenceInputStream.builder().setCharSequence("test").setCharset((Charset) null).get()) {
+            IOUtils.toByteArray(in);
+            assertEquals(Charset.defaultCharset(), in.getCharsetEncoder().charset());
+        }
     }
 
     @Test
     public void testNullCharsetName() throws IOException {
         try (CharSequenceInputStream in = new CharSequenceInputStream("A", (String) null)) {
+            IOUtils.toByteArray(in);
+            assertEquals(Charset.defaultCharset(), in.getCharsetEncoder().charset());
+        }
+        try (CharSequenceInputStream in = CharSequenceInputStream.builder().setCharSequence("test").setCharset((String) null).get()) {
             IOUtils.toByteArray(in);
             assertEquals(Charset.defaultCharset(), in.getCharsetEncoder().charset());
         }
@@ -379,6 +396,48 @@ public class CharSequenceInputStreamTest {
         for (final String csName : getRequiredCharsetNames()) {
             testReadZero(csName);
         }
+    }
+
+    private void testResetBeforeEnd(final CharSequenceInputStream inputStream) throws IOException {
+        inputStream.mark(1);
+        assertEquals('1', inputStream.read());
+        inputStream.reset();
+        assertEquals('1', inputStream.read());
+        assertEquals('2', inputStream.read());
+        inputStream.reset();
+        assertEquals('1', inputStream.read());
+        assertEquals('2', inputStream.read());
+        assertEquals('3', inputStream.read());
+        inputStream.reset();
+        assertEquals('1', inputStream.read());
+        assertEquals('2', inputStream.read());
+        assertEquals('3', inputStream.read());
+        assertEquals('4', inputStream.read());
+        inputStream.reset();
+        assertEquals('1', inputStream.read());
+    }
+
+    @Test
+    @Disabled("[IO-795] CharSequenceInputStream.reset() only works once")
+    public void testResetBeforeEndSetCharSequence() throws IOException {
+        try (final CharSequenceInputStream inputStream = CharSequenceInputStream.builder().setCharSequence("1234").get()) {
+            testResetBeforeEnd(inputStream);
+        }
+    }
+
+    @Test
+    public void testResetCharset() {
+        assertNotNull(CharSequenceInputStream.builder().setReader(new StringReader("\uD800")).setCharset((Charset) null).getCharset());
+    }
+
+    @Test
+    public void testResetCharsetEncoder() {
+        assertNotNull(CharSequenceInputStream.builder().setReader(new StringReader("\uD800")).setCharsetEncoder(null).getCharsetEncoder());
+    }
+
+    @Test
+    public void testResetCharsetName() {
+        assertNotNull(CharSequenceInputStream.builder().setReader(new StringReader("\uD800")).setCharset((String) null).getCharset());
     }
 
     private void testSingleByteRead(final String testString, final String charsetName) throws IOException {

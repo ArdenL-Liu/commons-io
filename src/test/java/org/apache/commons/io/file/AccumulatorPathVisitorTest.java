@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,12 +40,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.ThreadUtils;
 import org.apache.commons.io.filefilter.AndFileFilter;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.EmptyFileFilter;
 import org.apache.commons.io.filefilter.PathVisitorFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.commons.io.function.IOBiFunction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -72,8 +73,7 @@ public class AccumulatorPathVisitorTest {
             Arguments.of((Supplier<AccumulatorPathVisitor>) () -> new AccumulatorPathVisitor(
                 Counters.bigIntegerPathCounters(),
                 CountingPathVisitor.defaultDirFilter(),
-                CountingPathVisitor.defaultFileFilter(),
-                IOBiFunction.noop())));
+                CountingPathVisitor.defaultFileFilter())));
         // @formatter:on
     }
 
@@ -185,7 +185,7 @@ public class AccumulatorPathVisitorTest {
             public FileVisitResult visitFile(final Path path, final BasicFileAttributes attributes) throws IOException {
                 // Slow down the walking a bit to try and cause conflicts with the deletion thread
                 try {
-                    Thread.sleep(10);
+                    ThreadUtils.sleep(Duration.ofMillis(10));
                 } catch (final InterruptedException ignore) {
                     // e.printStackTrace();
                 }
@@ -209,7 +209,7 @@ public class AccumulatorPathVisitorTest {
             Files.walkFileTree(tempDirPath, countingFileFilter);
         } finally {
             if (!deleted.get()) {
-                Thread.sleep(1000);
+                ThreadUtils.sleep(Duration.ofMillis(1000));
             }
             if (!deleted.get()) {
                 executor.awaitTermination(5, TimeUnit.SECONDS);

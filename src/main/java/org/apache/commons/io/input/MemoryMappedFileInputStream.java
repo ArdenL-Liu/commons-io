@@ -27,6 +27,9 @@ import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import org.apache.commons.io.build.AbstractOrigin;
+import org.apache.commons.io.build.AbstractStreamBuilder;
+
 /**
  * An {@link InputStream} that utilizes memory mapped files to improve performance. A sliding window of the file is
  * mapped to memory to avoid mapping the entire file to memory at one time. The size of the sliding buffer is
@@ -40,8 +43,15 @@ import java.nio.file.StandardOpenOption;
  * Note: Use of this class does not necessarily obviate the need to use a {@link BufferedInputStream}. Depending on the
  * use case, the use of buffering may still further improve performance. For example:
  * </p>
- * <pre>
- * new BufferedInputStream(new GzipInputStream(new MemoryMappedFileInputStream(path))))
+ * <p>
+ * To build an instance, see {@link Builder}.
+ * </p>
+ * <pre>{@code
+ * BufferedInputStream s = new BufferedInputStream(new GzipInputStream(
+ *   MemoryMappedFileInputStream.builder()
+ *     .setPath(path)
+ *     .setBufferSize(256 * 1024)
+ *     .get()));}
  * </pre>
  * <p>
  * should outperform:
@@ -49,17 +59,77 @@ import java.nio.file.StandardOpenOption;
  * <pre>
  * new GzipInputStream(new MemoryMappedFileInputStream(path))
  * </pre>
+ * <pre>{@code
+ * GzipInputStream s = new GzipInputStream(
+ *   MemoryMappedFileInputStream.builder()
+ *     .setPath(path)
+ *     .setBufferSize(256 * 1024)
+ *     .get());}
+ * </pre>
  *
  * @since 2.12.0
  */
-public class MemoryMappedFileInputStream extends InputStream {
+public final class MemoryMappedFileInputStream extends InputStream {
+
+    /**
+     * Builds a new {@link MemoryMappedFileInputStream} instance.
+     * <p>
+     * For example:
+     * </p>
+     * <pre>{@code
+     * MemoryMappedFileInputStream s = MemoryMappedFileInputStream.builder()
+     *   .setPath(path)
+     *   .setBufferSize(256 * 1024)
+     *   .get();}
+     * </pre>
+     *
+     * @since 2.12.0
+     */
+    public static class Builder extends AbstractStreamBuilder<MemoryMappedFileInputStream, Builder> {
+
+        public Builder() {
+            setBufferSizeDefault(DEFAULT_BUFFER_SIZE);
+            setBufferSize(DEFAULT_BUFFER_SIZE);
+        }
+
+        /**
+         * Constructs a new instance.
+         * <p>
+         * This builder use the aspects Path and buffer size.
+         * </p>
+         * <p>
+         * You must provide an origin that can be converted to a Path by this builder, otherwise, this call will throw an
+         * {@link UnsupportedOperationException}.
+         * </p>
+         *
+         * @return a new instance.
+         * @throws UnsupportedOperationException if the origin cannot provide a Path.
+         * @see AbstractOrigin#getPath()
+         */
+        @Override
+        public MemoryMappedFileInputStream get() throws IOException {
+            return new MemoryMappedFileInputStream(getPath(), getBufferSize());
+        }
+    }
 
     /**
      * Default size of the sliding memory mapped buffer. We use 256K, equal to 65536 pages (given a 4K page size).
      * Increasing the value beyond the default size will generally not provide any increase in throughput.
      */
     private static final int DEFAULT_BUFFER_SIZE = 256 * 1024;
+
     private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.wrap(new byte[0]).asReadOnlyBuffer();
+
+    /**
+     * Constructs a new {@link Builder}.
+     *
+     * @return a new {@link Builder}.
+     * @since 2.12.0
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
     private final int bufferSize;
     private final FileChannel channel;
     private ByteBuffer buffer = EMPTY_BUFFER;
@@ -74,20 +144,10 @@ public class MemoryMappedFileInputStream extends InputStream {
      * Constructs a new instance.
      *
      * @param file The path of the file to open.
-     * @throws IOException If an I/O error occurs
-     */
-    public MemoryMappedFileInputStream(final Path file) throws IOException {
-        this(file, DEFAULT_BUFFER_SIZE);
-    }
-
-    /**
-     * Constructs a new instance.
-     *
-     * @param file The path of the file to open.
      * @param bufferSize Size of the sliding buffer.
      * @throws IOException If an I/O error occurs.
      */
-    public MemoryMappedFileInputStream(final Path file, final int bufferSize) throws IOException {
+    private MemoryMappedFileInputStream(final Path file, final int bufferSize) throws IOException {
         this.bufferSize = bufferSize;
         this.channel = FileChannel.open(file, StandardOpenOption.READ);
     }
@@ -117,6 +177,10 @@ public class MemoryMappedFileInputStream extends InputStream {
         if (closed) {
             throw new IOException("Stream closed");
         }
+    }
+
+    int getBufferSize() {
+        return bufferSize;
     }
 
     private void nextBuffer() throws IOException {

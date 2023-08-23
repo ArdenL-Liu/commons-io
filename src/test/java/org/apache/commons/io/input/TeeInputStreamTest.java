@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.test.ThrowOnCloseInputStream;
 import org.apache.commons.io.test.ThrowOnCloseOutputStream;
@@ -35,11 +36,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * JUnit Test Case for {@link TeeInputStream}.
+ * Tests {@link TeeInputStream}.
  */
 public class TeeInputStreamTest  {
 
-    private final String ASCII = "US-ASCII";
+    private final String ASCII = StandardCharsets.US_ASCII.name();
 
     private InputStream tee;
 

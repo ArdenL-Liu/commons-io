@@ -27,14 +27,13 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Tests the CountingInputStream.
- *
  */
 public class CountingInputStreamTest {
 
     @Test
     public void testCounting() throws Exception {
         final String text = "A piece of text";
-        try (CountingInputStream cis = new CountingInputStream(new StringInputStream(text))) {
+        try (CountingInputStream cis = new CountingInputStream(CharSequenceInputStream.builder().setCharSequence(text).get())) {
 
             // have to declare this larger as we're going to read
             // off the end of the stream and input stream seems
@@ -150,7 +149,7 @@ public class CountingInputStreamTest {
     @Test
     public void testSkipping() throws IOException {
         final String text = "Hello World!";
-        try (CountingInputStream cis = new CountingInputStream(new StringInputStream(text))) {
+        try (CountingInputStream cis = new CountingInputStream(CharSequenceInputStream.builder().setCharSequence(text).get())) {
 
             assertEquals(6, cis.skip(6));
             assertEquals(6, cis.getCount());

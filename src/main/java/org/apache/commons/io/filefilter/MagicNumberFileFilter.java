@@ -30,8 +30,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.RandomAccessFileMode;
+import org.apache.commons.io.RandomAccessFiles;
 
 /**
  * <p>
@@ -85,6 +85,15 @@ import org.apache.commons.io.RandomAccessFileMode;
  * System.out.println(visitor.getDirList());
  * System.out.println(visitor.getFileList());
  * </pre>
+ * <h2>Deprecating Serialization</h2>
+ * <p>
+ * <em>Serialization is deprecated and will be removed in 3.0.</em>
+ * </p>
+ *
+ * <h2>Deprecating Serialization</h2>
+ * <p>
+ * <em>Serialization is deprecated and will be removed in 3.0.</em>
+ * </p>
  *
  * @since 2.0
  * @see FileFilterUtils#magicNumberFileFilter(byte[])
@@ -92,8 +101,7 @@ import org.apache.commons.io.RandomAccessFileMode;
  * @see FileFilterUtils#magicNumberFileFilter(byte[], long)
  * @see FileFilterUtils#magicNumberFileFilter(String, long)
  */
-public class MagicNumberFileFilter extends AbstractFileFilter implements
-        Serializable {
+public class MagicNumberFileFilter extends AbstractFileFilter implements Serializable {
 
     /**
      * The serialization version unique identifier.
@@ -254,22 +262,12 @@ public class MagicNumberFileFilter extends AbstractFileFilter implements
     @Override
     public boolean accept(final File file) {
         if (file != null && file.isFile() && file.canRead()) {
-            try {
-                try (RandomAccessFile randomAccessFile = RandomAccessFileMode.READ_ONLY.create(file)) {
-                    final byte[] fileBytes = IOUtils.byteArray(this.magicNumbers.length);
-                    randomAccessFile.seek(byteOffset);
-                    final int read = randomAccessFile.read(fileBytes);
-                    if (read != magicNumbers.length) {
-                        return false;
-                    }
-                    return Arrays.equals(this.magicNumbers, fileBytes);
-                }
-            }
-            catch (final IOException ignored) {
+            try (RandomAccessFile randomAccessFile = RandomAccessFileMode.READ_ONLY.create(file)) {
+                return Arrays.equals(magicNumbers, RandomAccessFiles.read(randomAccessFile, byteOffset, magicNumbers.length));
+            } catch (final IOException ignored) {
                 // Do nothing, fall through and do not accept file
             }
         }
-
         return false;
     }
 
@@ -295,6 +293,7 @@ public class MagicNumberFileFilter extends AbstractFileFilter implements
             try {
                 try (FileChannel fileChannel = FileChannel.open(file)) {
                     final ByteBuffer byteBuffer = ByteBuffer.allocate(this.magicNumbers.length);
+                    fileChannel.position(byteOffset);
                     final int read = fileChannel.read(byteBuffer);
                     if (read != magicNumbers.length) {
                         return FileVisitResult.TERMINATE;

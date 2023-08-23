@@ -22,48 +22,91 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 
+import org.apache.commons.io.build.AbstractOrigin;
+import org.apache.commons.io.build.AbstractStreamBuilder;
 import org.apache.commons.io.function.Uncheck;
 
 /**
  * A {@link BufferedReader} that throws {@link UncheckedIOException} instead of {@link IOException}.
+ * <p>
+ * To build an instance, see {@link Builder}.
+ * </p>
  *
  * @see BufferedReader
  * @see IOException
  * @see UncheckedIOException
  * @since 2.12.0
  */
-public class UncheckedBufferedReader extends BufferedReader {
+public final class UncheckedBufferedReader extends BufferedReader {
 
     /**
-     * Creates a new buffered reader.
-     *
-     * @param reader a Reader object providing the underlying stream.
-     * @return a new UncheckedBufferedReader.
-     * @throws NullPointerException if {@code reader} is {@code null}.
+     * Builds a new {@link UncheckedBufferedReader} instance.
+     * <p>
+     * Using File IO:
+     * </p>
+     * <pre>{@code
+     * UncheckedBufferedReader s = UncheckedBufferedReader.builder()
+     *   .setFile(file)
+     *   .setBufferSize(8192)
+     *   .setCharset(Charset.defaultCharset())
+     *   .get();}
+     * </pre>
+     * <p>
+     * Using NIO Path:
+     * </p>
+     * <pre>{@code
+     * UncheckedBufferedReader s = UncheckedBufferedReader.builder()
+     *   .setPath(path)
+     *   .setBufferSize(8192)
+     *   .setCharset(Charset.defaultCharset())
+     *   .get();}
+     * </pre>
      */
-    public static UncheckedBufferedReader on(final Reader reader) {
-        return new UncheckedBufferedReader(reader);
+    public static class Builder extends AbstractStreamBuilder<UncheckedBufferedReader, Builder> {
+
+        /**
+         * Constructs a new instance.
+         * <p>
+         * This builder use the aspects Reader, Charset, buffer size.
+         * </p>
+         * <p>
+         * You must provide an origin that can be converted to a Reader by this builder, otherwise, this call will throw an
+         * {@link UnsupportedOperationException}.
+         * </p>
+         *
+         * @return a new instance.
+         * @throws UnsupportedOperationException if the origin cannot provide a Reader.
+         * @throws IllegalStateException if the {@code origin} is {@code null}.
+         * @see AbstractOrigin#getReader(Charset)
+         */
+        @Override
+        public UncheckedBufferedReader get() {
+            // This an unchecked class, so this method is as well.
+            return Uncheck.get(() -> new UncheckedBufferedReader(checkOrigin().getReader(getCharset()), getBufferSize()));
+        }
+
     }
 
     /**
-     * Creates a buffering character-input stream that uses a default-sized input buffer.
+     * Constructs a new {@link Builder}.
      *
-     * @param reader A Reader
+     * @return a new {@link Builder}.
      */
-    public UncheckedBufferedReader(final Reader reader) {
-        super(reader);
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
-     * Creates a buffering character-input stream that uses an input buffer of the specified size.
+     * Constructs a buffering character-input stream that uses an input buffer of the specified size.
      *
      * @param reader     A Reader
      * @param bufferSize Input-buffer size
      *
      * @throws IllegalArgumentException If {@code bufferSize <= 0}
      */
-    public UncheckedBufferedReader(final Reader reader, final int bufferSize) {
+    private UncheckedBufferedReader(final Reader reader, final int bufferSize) {
         super(reader, bufferSize);
     }
 

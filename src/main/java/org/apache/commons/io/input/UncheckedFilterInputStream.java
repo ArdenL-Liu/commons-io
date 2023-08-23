@@ -13,7 +13,6 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
  */
 
 package org.apache.commons.io.input;
@@ -24,36 +23,81 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 
+import org.apache.commons.io.build.AbstractStreamBuilder;
 import org.apache.commons.io.function.Uncheck;
 
 /**
  * A {@link BufferedReader} that throws {@link UncheckedIOException} instead of {@link IOException}.
+ * <p>
+ * To build an instance, see {@link Builder}.
+ * </p>
  *
  * @see BufferedReader
  * @see IOException
  * @see UncheckedIOException
  * @since 2.12.0
  */
-public class UncheckedFilterInputStream extends FilterInputStream {
+public final class UncheckedFilterInputStream extends FilterInputStream {
 
     /**
-     * Creates a {@link UncheckedFilterInputStream}.
-     *
-     * @param inputStream the underlying input stream, or {@code null} if this instance is to be created without an
-     *        underlying stream.
-     * @return a new UncheckedFilterInputStream.
+     * Builds a new {@link UncheckedFilterInputStream} instance.
+     * <p>
+     * Using File IO:
+     * </p>
+     * <pre>{@code
+     * UncheckedFilterInputStream s = UncheckedFilterInputStream.builder()
+     *   .setFile(file)
+     *   .get();}
+     * </pre>
+     * <p>
+     * Using NIO Path:
+     * </p>
+     * <pre>{@code
+     * UncheckedFilterInputStream s = UncheckedFilterInputStream.builder()
+     *   .setPath(path)
+     *   .get();}
+     * </pre>
      */
-    public static UncheckedFilterInputStream on(final InputStream inputStream) {
-        return new UncheckedFilterInputStream(inputStream);
+    public static class Builder extends AbstractStreamBuilder<UncheckedFilterInputStream, Builder> {
+
+        /**
+         * Constructs a new instance.
+         * <p>
+         * This builder use the aspect InputStream and OpenOption[].
+         * </p>
+         * <p>
+         * You must provide an origin that can be converted to an InputStream by this builder, otherwise, this call will throw an
+         * {@link UnsupportedOperationException}.
+         * </p>
+         *
+         * @return a new instance.
+         * @throws UnsupportedOperationException if the origin cannot provide an InputStream.
+         * @see #getInputStream()
+         */
+        @Override
+        public UncheckedFilterInputStream get() {
+            // This an unchecked class, so this method is as well.
+            return Uncheck.get(() -> new UncheckedFilterInputStream(getInputStream()));
+        }
+
     }
 
     /**
-     * Creates a {@link UncheckedFilterInputStream}.
+     * Constructs a new {@link Builder}.
+     *
+     * @return a new {@link Builder}.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Constructs a {@link UncheckedFilterInputStream}.
      *
      * @param inputStream the underlying input stream, or {@code null} if this instance is to be created without an
      *        underlying stream.
      */
-    public UncheckedFilterInputStream(final InputStream inputStream) {
+    private UncheckedFilterInputStream(final InputStream inputStream) {
         super(inputStream);
     }
 

@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
- * JUnit Test Case for {@link BrokenWriter}.
+ * Tests {@link BrokenWriter}.
  */
 public class UncheckedFilterOutputStreamTest {
 
@@ -40,10 +40,11 @@ public class UncheckedFilterOutputStreamTest {
 
     @SuppressWarnings("resource")
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws IOException {
         exception = new IOException("test exception");
-        brokenWriter = UncheckedFilterOutputStream.on(new BrokenOutputStream(exception));
-        stringWriter = UncheckedFilterOutputStream.on(new WriterOutputStream(new StringWriter(), Charset.defaultCharset()));
+        brokenWriter = UncheckedFilterOutputStream.builder().setOutputStream(new BrokenOutputStream(exception)).get();
+        stringWriter = UncheckedFilterOutputStream.builder()
+                .setOutputStream(WriterOutputStream.builder().setWriter(new StringWriter()).setCharset(Charset.defaultCharset()).get()).get();
     }
 
     @Test

@@ -22,36 +22,81 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 
+import org.apache.commons.io.build.AbstractStreamBuilder;
 import org.apache.commons.io.function.Uncheck;
 
 /**
  * A {@link FilterWriter} that throws {@link UncheckedIOException} instead of {@link IOException}.
+ * <p>
+ * To build an instance, see {@link Builder}.
+ * </p>
  *
  * @see FilterWriter
  * @see IOException
  * @see UncheckedIOException
  * @since 2.12.0
  */
-public class UncheckedFilterWriter extends FilterWriter {
+public final class UncheckedFilterWriter extends FilterWriter {
 
     /**
-     * Creates a new filtered writer.
-     *
-     * @param writer a Writer object providing the underlying stream.
-     * @return a new UncheckedFilterReader.
-     * @throws NullPointerException if {@code writer} is {@code null}.
+     * Builds a new {@link UncheckedFilterWriter} instance.
+     * <p>
+     * Using File IO:
+     * </p>
+     * <pre>{@code
+     * UncheckedFilterWriter s = UncheckedFilterWriter.builder()
+     *   .setFile(file)
+     *   .get();}
+     * </pre>
+     * <p>
+     * Using NIO Path:
+     * </p>
+     * <pre>{@code
+     * UncheckedFilterWriter s = UncheckedFilterWriter.builder()
+     *   .setPath(path)
+     *   .get();}
+     * </pre>
      */
-    public static UncheckedFilterWriter on(final Writer writer) {
-        return new UncheckedFilterWriter(writer);
+    public static class Builder extends AbstractStreamBuilder<UncheckedFilterWriter, Builder> {
+
+        /**
+         * Constructs a new instance.
+         * <p>
+         * This builder use the aspects Writer, OpenOption[], and Charset.
+         * </p>
+         * <p>
+         * You must provide an origin that can be converted to a Writer by this builder, otherwise, this call will throw an
+         * {@link UnsupportedOperationException}.
+         * </p>
+         *
+         * @return a new instance.
+         * @throws UnsupportedOperationException if the origin cannot provide a Writer.
+         * @see #getWriter()
+         */
+        @SuppressWarnings("resource")
+        @Override
+        public UncheckedFilterWriter get() throws IOException {
+            return new UncheckedFilterWriter(getWriter());
+        }
+
     }
 
     /**
-     * Creates a new filtered writer.
+     * Constructs a new {@link Builder}.
+     *
+     * @return a new {@link Builder}.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Constructs a new filtered writer.
      *
      * @param writer a Writer object providing the underlying stream.
      * @throws NullPointerException if {@code writer} is {@code null}.
      */
-    protected UncheckedFilterWriter(final Writer writer) {
+    private UncheckedFilterWriter(final Writer writer) {
         super(writer);
     }
 

@@ -27,6 +27,7 @@ import java.util.Objects;
 
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.build.AbstractStreamBuilder;
 
 /**
  * This class is used to wrap a stream that includes an encoded {@link ByteOrderMark} as its first bytes.
@@ -44,33 +45,38 @@ import org.apache.commons.io.IOUtils;
  * <li>UTF-32BE - {@link ByteOrderMark#UTF_32LE}</li>
  * <li>UTF-32LE - {@link ByteOrderMark#UTF_32BE}</li>
  * </ul>
- *
- * <h2>Example 1 - Detect and exclude a UTF-8 BOM</h2>
+ * <p>
+ * To build an instance, see {@link Builder}.
+ * </p>
+ * <h2>Example 1 - Detecting and excluding a UTF-8 BOM</h2>
  *
  * <pre>
- * BOMInputStream bomIn = new BOMInputStream(in);
+ * BOMInputStream bomIn = BOMInputStream.builder().setInputStream(in).get();
  * if (bomIn.hasBOM()) {
  *     // has a UTF-8 BOM
  * }
  * </pre>
  *
- * <h2>Example 2 - Detect a UTF-8 BOM (but don't exclude it)</h2>
+ * <h2>Example 2 - Detecting a UTF-8 BOM without excluding it</h2>
  *
  * <pre>
  * boolean include = true;
- * BOMInputStream bomIn = new BOMInputStream(in, include);
+ * BOMInputStream bomIn = BOMInputStream.builder()
+ *     .setInputStream(in)
+ *     .setInclude(include)
+ *     .get();
  * if (bomIn.hasBOM()) {
  *     // has a UTF-8 BOM
  * }
  * </pre>
  *
- * <h2>Example 3 - Detect Multiple BOMs</h2>
+ * <h2>Example 3 - Detecting Multiple BOMs</h2>
  *
  * <pre>
- * BOMInputStream bomIn = new BOMInputStream(in,
- *   ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE,
- *   ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE
- *   );
+ * BOMInputStream bomIn = BOMInputStream.builder()
+ *   .setInputStream(in)
+ *   .setByteOrderMarks(ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE)
+ *   .get();
  * if (bomIn.hasBOM() == false) {
  *     // No BOM found
  * } else if (bomIn.hasBOM(ByteOrderMark.UTF_16LE)) {
@@ -91,31 +97,133 @@ import org.apache.commons.io.IOUtils;
 public class BOMInputStream extends ProxyInputStream {
 
     /**
+     * Builds a new {@link BOMInputStream} instance.
+     *
+     * <h2>Using NIO</h2>
+     * <pre>{@code
+     * BOMInputStream s = BOMInputStream.builder()
+     *   .setPath(Paths.get("MyFile.xml"))
+     *   .setByteOrderMarks(ByteOrderMark.UTF_8)
+     *   .setInclude(false)
+     *   .get();}
+     * </pre>
+     * <h2>Using IO</h2>
+     * <pre>{@code
+     * BOMInputStream s = BOMInputStream.builder()
+     *   .setFile(new File("MyFile.xml"))
+     *   .setByteOrderMarks(ByteOrderMark.UTF_8)
+     *   .setInclude(false)
+     *   .get();}
+     * </pre>
+     *
+     * @since 2.12.0
+     */
+    public static class Builder extends AbstractStreamBuilder<BOMInputStream, Builder> {
+
+        private static final ByteOrderMark[] DEFAULT = { ByteOrderMark.UTF_8 };
+
+        /**
+         * For test access.
+         *
+         * @return the default byte order mark
+         */
+        static ByteOrderMark getDefaultByteOrderMark() {
+            return DEFAULT[0];
+        }
+
+        private ByteOrderMark[] byteOrderMarks = DEFAULT;
+
+        private boolean include;
+
+        /**
+         * Constructs a new instance.
+         * <p>
+         * This builder use the aspects InputStream, OpenOption[], include, and ByteOrderMark[].
+         * </p>
+         * <p>
+         * You must provide an origin that can be converted to an InputStream by this builder, otherwise, this call will throw an
+         * {@link UnsupportedOperationException}.
+         * </p>
+         *
+         * @return a new instance.
+         * @throws UnsupportedOperationException if the origin cannot provide an InputStream.
+         * @see #getInputStream()
+         */
+        @SuppressWarnings("resource")
+        @Override
+        public BOMInputStream get() throws IOException {
+            return new BOMInputStream(getInputStream(), include, byteOrderMarks);
+        }
+
+        /**
+         * Sets the ByteOrderMarks to detect and optionally exclude.
+         * <p>
+         * The default is {@link ByteOrderMark#UTF_8}.
+         * </p>
+         *
+         * @param byteOrderMarks the ByteOrderMarks to detect and optionally exclude.
+         * @return this
+         */
+        public Builder setByteOrderMarks(final ByteOrderMark... byteOrderMarks) {
+            this.byteOrderMarks = byteOrderMarks != null ? byteOrderMarks.clone() : DEFAULT;
+            return this;
+        }
+
+        /**
+         * Sets whether to include the UTF-8 BOM (true) or to exclude it (false).
+         * <p>
+         * The default is false.
+         * </p>
+         *
+         * @param include true to include the UTF-8 BOM or false to exclude it. return this;
+         * @return this
+         */
+        public Builder setInclude(final boolean include) {
+            this.include = include;
+            return this;
+        }
+
+    }
+
+    /**
      * Compares ByteOrderMark objects in descending length order.
      */
-    private static final Comparator<ByteOrderMark> ByteOrderMarkLengthComparator = (bom1, bom2) -> Integer.compare(bom2.length(), bom1.length());
+    private static final Comparator<ByteOrderMark> ByteOrderMarkLengthComparator = Comparator.comparing(ByteOrderMark::length).reversed();
 
-    private final boolean include;
+
+    /**
+     * Constructs a new {@link Builder}.
+     *
+     * @return a new {@link Builder}.
+     * @since 2.12.0
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
 
     /**
      * BOMs are sorted from longest to shortest.
      */
     private final List<ByteOrderMark> boms;
+
     private ByteOrderMark byteOrderMark;
-    private int[] firstBytes;
-    private int fbLength;
     private int fbIndex;
-    private int markFbIndex;
+    private int fbLength;
+    private int[] firstBytes;
+    private final boolean include;
     private boolean markedAtStart;
+    private int markFbIndex;
 
     /**
      * Constructs a new BOM InputStream that excludes a {@link ByteOrderMark#UTF_8} BOM.
      *
      * @param delegate
      *            the InputStream to delegate to
+     * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
+    @Deprecated
     public BOMInputStream(final InputStream delegate) {
-        this(delegate, false, ByteOrderMark.UTF_8);
+        this(delegate, false, Builder.DEFAULT);
     }
 
     /**
@@ -125,9 +233,11 @@ public class BOMInputStream extends ProxyInputStream {
      *            the InputStream to delegate to
      * @param include
      *            true to include the UTF-8 BOM or false to exclude it
+     * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
+    @Deprecated
     public BOMInputStream(final InputStream delegate, final boolean include) {
-        this(delegate, include, ByteOrderMark.UTF_8);
+        this(delegate, include, Builder.DEFAULT);
     }
 
     /**
@@ -139,7 +249,9 @@ public class BOMInputStream extends ProxyInputStream {
      *            true to include the specified BOMs or false to exclude them
      * @param boms
      *            The BOMs to detect and optionally exclude
+     * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
+    @Deprecated
     public BOMInputStream(final InputStream delegate, final boolean include, final ByteOrderMark... boms) {
         super(delegate);
         if (IOUtils.length(boms) == 0) {
@@ -160,7 +272,9 @@ public class BOMInputStream extends ProxyInputStream {
      *            the InputStream to delegate to
      * @param boms
      *            The BOMs to detect and exclude
+     * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
+    @Deprecated
     public BOMInputStream(final InputStream delegate, final ByteOrderMark... boms) {
         this(delegate, false, boms);
     }

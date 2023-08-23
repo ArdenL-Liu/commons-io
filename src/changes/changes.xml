@@ -39,13 +39,169 @@ then tweak the source formatting if necessary and regenerate, then commit
 The <action> type attribute can be add,update,fix,remove.
 -->
 
-<document>
+<document xmlns="http://maven.apache.org/changes/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/changes/1.0.0 http://maven.apache.org/xsd/changes-1.0.0.xsd">
   <properties>
     <title>Apache Commons IO Release Notes</title>
   </properties>
 
   <body>
-    <release version="2.12.0" date="2021-MM-DD" description="Java 8 required.">
+    <release version="2.14.0" date="2023-MM-DD" description="Java 8 required.">
+      <!-- FIX -->
+      <action dev="ggregory" type="fix" issue="IO-799" due-to="Jeroen van der Vegt, Gary Gregory">
+        ReaderInputStream.read() throws an exception instead of returning -1 when called again after returning -1.
+      </action>
+      <action dev="ggregory" type="fix" issue="IO-804" due-to="Elliotte Rusty Harold, Gary Gregory">
+        FileUtils.forceMkdirParent() Javadoc is incorrect.
+      </action>
+      <action dev="ggregory" type="fix" due-to="step-security-bot, Gary Gregory">
+        [StepSecurity] ci: Harden GitHub Actions #461.
+      </action>
+      <action dev="ggregory" type="fix" due-to="Gary Gregory">
+        MagicNumberFileFilter.accept(Path, BasicFileAttributes) doesn't its byteOffset before reading.
+      </action>
+      <action dev="ggregory" type="fix" due-to="Gary Gregory">
+        Javadoc improvements.
+      </action>
+      <action dev="ggregory" type="fix" due-to="Josh Soref, Gary Gregory">
+        Spelling #468.
+      </action>
+      <!-- ADD -->
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add DeferredFileOutputStream.getPath().
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add FileCleaningTracker.track(Path, Object[, FileDeleteStrategy]).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add IOUtils.skip[Fully](InputStream, long, Supplier&lt;byte[]&gt;).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add FilesUncheck.find(Path, int, BiPredicate%lt;Path, BasicFileAttributes&gt;, FileVisitOption...)
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add IOIntSupplier.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add IOLongSupplier.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add Uncheck.getAsInt(IOIntSupplier [, Supplier&lt;String&gt;]).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add Uncheck.getAsLong(IOLongSupplier [, Supplier&lt;String&gt;]).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add Uncheck.run(IORunnable, Supplier&lt;String&gt;)
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add Uncheck.get(IOSupplier, Supplier&lt;String&gt;)
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        IOFileFilter now also extends java.nio.file.PathMatcher.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add PathMatcherFileFilter to adapt java.nio.file.PathMatcher.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add ThresholdingOutputStream.getOutputStream() and deprecate getStream().
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add DeferredFileOutputStream.Builder.setOutputFile(Path).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add DeferredFileOutputStream.Builder.setDirectory(Path).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add AbstractStreamBuilder.setBufferSizeChecker(IntToIntFunction).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add AbstractStreamBuilder.setBufferSizeMax(int).
+      </action>
+      <!-- UPDATE -->
+      <action dev="ggregory" type="update" due-to="Dependabot">
+        Bump jimfs from 1.2 to 1.3.0 #465 (tests).
+      </action>
+      <action dev="ggregory" type="update" due-to="Gary Gregory">
+        Bump commons-parent from 58 to 59.
+      </action>
+      <action type="update" dev="ggregory" due-to="Gary Gregory">
+        Bump commons-lang3 from 3.12 to 3.13.0.
+      </action>
+    </release>
+    <release version="2.13.0" date="2023-06-03" description="Java 8 required.">
+      <!-- FIX -->
+      <action issue="IO-791" dev="ggregory" type="fix" due-to="Chad Wilson, Gary Gregory">
+        Regression in FileUtils.touch() - no longer creates parent directories.
+      </action>
+      <action dev="ggregory" type="fix" due-to="Gary Gregory">
+        ByteArrayOrigin should be able convert a byte[] to a ByteArrayInputStream.
+      </action>
+      <action dev="ggregory" type="fix" due-to="Gary Gregory">
+        AbstractOriginSupplier.checkOrigin() now throws IllegalStateException instead of NullPointerException.
+      </action>
+      <action issue="IO-796" dev="ggregory" type="fix" due-to="Giacomo Boccardo, Gary Gregory">
+        FileAlreadyExistsException in PathUtils.createParentDirectories(Path, LinkOption, FileAttribute...).
+      </action>
+      <action dev="ggregory" type="fix" due-to="Gary Gregory">
+        Only read the relevant portion of a file in AbstractOrigin.FileOrigin.getByteArray(long, int).
+      </action>
+      <action dev="ggregory" type="fix" due-to="Gary Gregory">
+        Only read the relevant portion of a file in AbstractOrigin.PathOrigin.getByteArray(long, int).
+      </action>
+      <action dev="ggregory" type="fix" due-to="Shai Shapira, Gary Gregory" issue="IO-798">
+        DeferredFileOutputStream throws exception when system temp dir is a symlink.
+      </action>
+      <action dev="ggregory" type="fix" due-to="Gary Gregory">
+        ReaderInputStream.Builder.setCharsetEncoder(null) should reset to a default object, not throw an NPE.
+      </action>
+      <action dev="ggregory" type="fix" due-to="Gary Gregory">
+        ReaderInputStream.Builder.setCharset(null) should reset to a default object, not throw an NPE.
+      </action>
+      <action dev="ggregory" type="fix" issue="IO-800" due-to="Jan Høydahl, Gary Gregory">
+        Fix back-incompatible change for PathUtils.deleteDirectory(): throw NoSuchFileException instead of IllegalArgumentException #459.
+      </action>
+      <action dev="ggregory" type="fix" issue="IO-801" due-to="James Howe, Gary Gregory">
+        Deprecation documentation gives incorrect alternative.
+      </action>
+      <!-- ADD -->
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add CharSequenceInputStream.Builder.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add ChunkedOutputStream.Builder.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add AbstractStreamBuilder.setOpenOptions(OpenOption...).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add some missing conversions to AbstractOrigin subclasses.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add AbstractOrigin.getByteArray(long, int).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add and use RandomAccessFiles.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add AbstractOrigin.size().
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add PathUtils.EMPTY_FILE_ATTRIBUTE_ARRAY.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add CharSequenceInputStream.Builder.setCharsetEncoder(CharsetEncoder).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add CharsetEncoders.toCharsetEncoder(CharsetEncoder, Supplier&lt;CharsetEncoder&gt;).
+      </action>
+      <!-- UPDATE -->
+      <action dev="ggregory" type="update" due-to="Gary Gregory, Dependabot">
+        Bump commons-parent from 57 to 58.
+      </action>
+    </release>
+    <release version="2.12.0" date="2023-05-13" description="Java 8 required.">
       <!-- FIX -->
       <action issue="IO-697" dev="kinow" type="fix" due-to="otter606">
         IOUtils.toByteArray size validation does not match documentation.
@@ -160,7 +316,7 @@ The <action> type attribute can be add,update,fix,remove.
         Fix misleading comments in FileFilterTest #334.
       </action>
       <action dev="ggregory" type="fix" due-to="Diego Marcilio">
-        Add missing javadoc for exceptions thrown for invalid arguments #339.
+        Add missing Javadoc for exceptions thrown for invalid arguments #339.
       </action>
       <action dev="ggregory" type="fix" due-to="richarda23">
         FileFilterTest minor fixes #340.
@@ -213,6 +369,21 @@ The <action> type attribute can be add,update,fix,remove.
       <action issue="IO-782" dev="ggregory" type="fix" due-to="Matteo Di Giovinazzo, Gary Gregory">
         SequenceReader should close readers when its close method is called #391.
       </action>
+      <action issue="IO-790" dev="ggregory" type="fix" due-to="Miguel Muñoz, Gary Gregory">
+        Fix symbolic link file filter #450.
+      </action>
+      <action issue="IO-790" dev="ggregory" type="fix" due-to="maxxedev, Gary Gregory, Bruno P. Kinoshita">
+        Apply nanoseconds precision for QueueInputStream timeout duration. #453.
+      </action>
+      <action dev="ggregory" type="fix" due-to="Marcono1234">
+        Fix overflow for FileUtilsTest constants #456.
+      </action>
+      <action dev="ggregory" type="fix" due-to="Gary Gregory">
+        Serialization is deprecated and will be removed in 3.0.
+      </action>
+      <action dev="ggregory" type="fix" due-to="Gary Gregory">
+        FileSystemUtils.performCommand(String[], int, Duration): Use Locale.getDefault() instead of ENGLISH.
+      </action>
       <!-- ADD -->
       <action type="add" dev="ggregory" due-to="Gary Gregory">
         Add GitHub coverage.yml.
@@ -231,9 +402,6 @@ The <action> type attribute can be add,update,fix,remove.
       </action>
       <action dev="ggregory" type="add" due-to="Gary Gregory">
         Add UncheckedFilterWriter.
-      </action>
-      <action dev="ggregory" type="add" due-to="Gary Gregory">
-        Add StringInputStream.
       </action>
       <action dev="ggregory" type="add" due-to="Gary Gregory">
         Add UncheckedFilterInputStream.
@@ -451,6 +619,30 @@ The <action> type attribute can be add,update,fix,remove.
       <action dev="ggregory" type="add" due-to="Gary Gregory">
         IOExceptionList implements Iterable.
       </action>
+      <action issue="IO-784" dev="ggregory" type="add" due-to="Fredrik Kjellberg, Gary Gregory">
+        Add support for Appendable to HexDump #418.
+      </action>
+      <action dev="ggregory" type="add" due-to="DaGeRe, Gary Gregory">
+        Add and use ThreadUtils.
+      </action>
+      <action issue="IO-786" dev="ggregory" type="add" due-to="Gary Gregory">
+        Add UnsynchronizedFilterInputStream.
+      </action>
+      <action issue="IO-786" dev="ggregory" type="add" due-to="Gary Gregory, Benoit Tellier">
+        Add UnsynchronizedBufferedInputStream.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add FileSystem.getBlockSize().
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory">
+        Add builders and avoid creating more constructors for all permutations of current options.
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory, maxxedev">
+        Refactor using new Supplier API IOUtils.toString(IOSupplier&lt;InputStream&gt;, Charset[, IOSupplier&lt;String&gt;]).
+      </action>
+      <action dev="ggregory" type="add" due-to="Gary Gregory, maxxedev">
+        Refactor using new Supplier API org.apache.commons.io.file.PathUtils.copy(IOSupplier&lt;InputStream&gt;, Path, CopyOption...).
+      </action>
       <!-- UPDATE -->
       <action dev="kinow" type="update" due-to="Dependabot, Gary Gregory">
         Bump actions/cache from 2.1.6 to 3.0.10 #307, #337, #393.
@@ -477,7 +669,7 @@ The <action> type attribute can be add,update,fix,remove.
         Bump JUnit from 5.7.2 to 5.8.2.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot">
-        Bump maven-enforcer-plugin from 3.0.0-M3 to 3.1.0 #255, #363.
+        Bump maven-enforcer-plugin from 3.0.0-M3 to 3.3.0 #255, #363, #431, #446.
       </action>
       <action dev="ggregory" type="update" due-to="Dependabot, Gary Gregory">
         Bump checkstyle from 8.44 to 9.3 #256, #257, #266, #279, #292. #308.
@@ -492,7 +684,7 @@ The <action> type attribute can be add,update,fix,remove.
         Bump jmh.version from 1.32 to 1.36 #258, #316, #342, #404.
       </action>
       <action dev="kinow" type="update" due-to="Dependabot">
-        Bump moditect-maven-plugin from 1.0.0.RC1 to 1.0.0.RC2 #280.
+        Bump moditect-maven-plugin from 1.0.0.RC1 to 1.0.0.Final #280, #439, #445.
       </action>
       <action dev="kinow" type="update" due-to="Dependabot, Gary Gregory">
         Bump junit-pioneer from 1.4.2 to 1.9.1 #304. #335, #362, #402, #406, #409.
@@ -501,7 +693,7 @@ The <action> type attribute can be add,update,fix,remove.
         Bump japicmp-maven-plugin from 0.15.3 to 0.16.0.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory, Dependabot">
-        Bump commons-parent from 52 to 56 #388, #415, #421.
+        Bump commons-parent from 52 to 57 #388, #415, #421, #184.
       </action>
       <action dev="ggregory" type="update" due-to="Gary Gregory">
         Bump jacoco-maven-plugin from 0.8.7 to 0.8.8.
@@ -529,6 +721,21 @@ The <action> type attribute can be add,update,fix,remove.
       </action>
       <action dev="kinow" type="update" due-to="Dependabot">
         Bump apache-rat-plugin from 0.14 to 0.15 #387.
+      </action>
+      <action dev="ggregory" type="update" due-to="Gary Gregory">
+        Bump default buffer size for CharSequenceInputStream to IOUtils#DEFAULT_BUFFER_SIZE.
+      </action>
+      <action dev="ggregory" type="update" due-to="Gary Gregory">
+        Bump default buffer size for ChunkedOutputStream to IOUtils#DEFAULT_BUFFER_SIZE.
+      </action>
+      <action dev="ggregory" type="update" due-to="Gary Gregory">
+        Bump default buffer size for ChunkedWriter to IOUtils#DEFAULT_BUFFER_SIZE.
+      </action>
+      <action dev="ggregory" type="update" due-to="Gary Gregory">
+        Bump default buffer size for ReaderInputStream to IOUtils#DEFAULT_BUFFER_SIZE.
+      </action>
+      <action dev="ggregory" type="update" due-to="Gary Gregory">
+        Bump default buffer size for WriterOutputStream to IOUtils#DEFAULT_BUFFER_SIZE.
       </action>
     </release>
     <release version="2.11.0" date="2021-07-09" description="Java 8 required.">
@@ -1208,7 +1415,7 @@ The <action> type attribute can be add,update,fix,remove.
         fix Tailer.run race condition runaway logging
       </action>
       <action issue="IO-483" dev="kinow" type="fix" due-to="Marko Vasic">
-        getPrefixLength return -1 if unix file contains colon
+        getPrefixLength return -1 if Unix file contains colon
       </action>
       <action issue="IO-520" dev="pschumacher" type="fix">
         FileUtilsTestCase#testContentEqualsIgnoreEOL fails on Windows

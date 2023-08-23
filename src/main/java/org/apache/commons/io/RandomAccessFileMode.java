@@ -29,24 +29,24 @@ import java.nio.file.Path;
 public enum RandomAccessFileMode {
 
     /**
-     * Mode "r" opens for reading only.
+     * Mode {@code "r"} opens for reading only.
      */
     READ_ONLY("r"),
 
     /**
-     * Mode "rw" opens for reading and writing.
+     * Mode {@code "rw"} opens for reading and writing.
      */
     READ_WRITE("rw"),
 
     /**
-     * Mode "rws" opens for reading and writing, as with "rw", and also require that every update to the file's content or
-     * metadata be written synchronously to the underlying storage device.
+     * Mode {@code "rws"} opens for reading and writing, as with {@code "rw"}, and also require that every update to the file's content or metadata be written
+     * synchronously to the underlying storage device.
      */
     READ_WRITE_SYNC_ALL("rws"),
 
     /**
-     * Mode "rwd" open for reading and writing, as with "rw", and also require that every update to the file's content be
-     * written synchronously to the underlying storage device.
+     * Mode {@code "rwd"} open for reading and writing, as with {@code "rw"}, and also require that every update to the file's content be written synchronously
+     * to the underlying storage device.
      */
     READ_WRITE_SYNC_CONTENT("rwd");
 
@@ -57,7 +57,7 @@ public enum RandomAccessFileMode {
     }
 
     /**
-     * Creates a random access file stream to read from, and optionally to write to, the file specified by the {@link File}
+     * Constructs a random access file stream to read from, and optionally to write to, the file specified by the {@link File}
      * argument.
      *
      * @param file the file object
@@ -69,7 +69,7 @@ public enum RandomAccessFileMode {
     }
 
     /**
-     * Creates a random access file stream to read from, and optionally to write to, the file specified by the {@link File}
+     * Constructs a random access file stream to read from, and optionally to write to, the file specified by the {@link File}
      * argument.
      *
      * @param file the file object
@@ -81,7 +81,7 @@ public enum RandomAccessFileMode {
     }
 
     /**
-     * Creates a random access file stream to read from, and optionally to write to, the file specified by the {@link File}
+     * Constructs a random access file stream to read from, and optionally to write to, the file specified by the {@link File}
      * argument.
      *
      * @param file the file object

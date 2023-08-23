@@ -20,9 +20,9 @@ package org.apache.commons.io.function;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -107,14 +107,14 @@ public class IOBaseStreamTest {
         baseStream = createStreamOfPaths();
         ioBaseStream = createIOBaseStream();
         ioBaseStreamPath = createIOBaseStreamPath();
-        ioBaseStreamAdapter = createIOBaseStreamApapter();
+        ioBaseStreamAdapter = createIOBaseStreamAdapter();
     }
 
     private IOBaseStreamFixture<Path, ?, Stream<Path>> createIOBaseStream() {
         return new IOBaseStreamFixture<>(createStreamOfPaths());
     }
 
-    private IOStream<Path> createIOBaseStreamApapter() {
+    private IOStream<Path> createIOBaseStreamAdapter() {
         return IOStreamAdapter.adapt(createStreamOfPaths());
     }
 

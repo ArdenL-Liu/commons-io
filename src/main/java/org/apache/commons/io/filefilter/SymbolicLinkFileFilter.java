@@ -56,11 +56,29 @@ import java.nio.file.attribute.BasicFileAttributes;
  * System.out.println(visitor.getDirList());
  * System.out.println(visitor.getFileList());
  * </pre>
+ * <h2>Deprecating Serialization</h2>
+ * <p>
+ * <em>Serialization is deprecated and will be removed in 3.0.</em>
+ * </p>
  *
  * @since 2.11.0
  * @see FileFilterUtils#fileFileFilter()
  */
 public class SymbolicLinkFileFilter extends AbstractFileFilter implements Serializable {
+    /*
+     * Note to developers: The unit test needs to create symbolic links to files. However, on
+     * Windows, this can't be done without admin privileges. This class is designed to allow a
+     * unit test to works around this by doing two things: 1) This separates the class logic from
+     * the call to identify a symbolic link, and 2) It allows the unit test to override that
+     * symbolic link call on Windows only.
+     * This means we can write unit tests will run on all machines. On Windows, the unit test
+     * can't create a symbolic link without admin privileges, so the unit tests won't
+     * completely test all the necessary behavior on Windows, but they will still test the class
+     * logic. Be careful not to break this, but be aware of it when writing unit tests. You can
+     * still maintain this class and its unit tests on Windows. The one method that won't get
+     * tested on Windows is not likely to change, and will be tested properly when it gets run
+     * on Apache servers.
+     */
 
     /**
      * Singleton instance of file filter.
@@ -87,25 +105,39 @@ public class SymbolicLinkFileFilter extends AbstractFileFilter implements Serial
     }
 
     /**
-     * Checks to see if the file is a file.
+     * Checks to see if the file is a symbolic link.
      *
      * @param file  the File to check
-     * @return true if the file is a file
+     * @return true if the file exists and is a symbolic link to either another file or a directory,
+     *         false otherwise.
      */
     @Override
     public boolean accept(final File file) {
-        return file.isFile();
+        return isSymbolicLink(file.toPath());
     }
 
     /**
-     * Checks to see if the file is a symbolic link.
-     * @param file  the File to check
+     * Checks to see if the file is a file.
      *
-     * @return true if the file is a symbolic link.
+     * @param path the File Path to check
+     * @return true if the file exists and is a symbolic link to either another file or a directory.
      */
     @Override
-    public FileVisitResult accept(final Path file, final BasicFileAttributes attributes) {
-        return toFileVisitResult(Files.isSymbolicLink(file));
+    public FileVisitResult accept(final Path path, final BasicFileAttributes attributes) {
+        return toFileVisitResult(isSymbolicLink(path));
     }
 
+    /**
+     * Delegates to {@link Files#isSymbolicLink(Path)} for testing.
+     * <p>
+     * Using package access for unit tests. To facilitate unit testing, all calls to test if the file is a symbolic should go through this method. (See the unit
+     * test for why.)
+     * </p>
+     *
+     * @param filePath The filePath to test
+     * @return true if the file exists and is a symbolic link to either a file or directory, false otherwise.
+     */
+    boolean isSymbolicLink(final Path filePath) {
+        return Files.isSymbolicLink(filePath);
+    }
 }

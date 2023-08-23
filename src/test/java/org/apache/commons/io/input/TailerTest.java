@@ -38,10 +38,12 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -52,8 +54,6 @@ import org.apache.commons.io.TestResources;
 import org.apache.commons.io.test.TestUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
-import com.google.common.collect.Lists;
 
 /**
  * Test for {@link Tailer}.
@@ -245,7 +245,11 @@ public class TailerTest {
         final File file = new File(temporaryFolder, "tailer-create-with-delay-and-from-start-with-reopen-and-buffersize-and-charset.txt");
         createFile(file, 0);
         final TestTailerListener listener = new TestTailerListener(1);
-        try (Tailer tailer = new Tailer.Builder(new NonStandardTailable(file), listener).build()) {
+        try (Tailer tailer = Tailer.builder()
+                .setExecutorService(Executors.newSingleThreadExecutor())
+                .setTailable(new NonStandardTailable(file))
+                .setTailerListener(listener)
+                .get()) {
             assertTrue(tailer.getTailable() instanceof NonStandardTailable);
             validateTailer(listener, file);
         }
@@ -262,7 +266,7 @@ public class TailerTest {
     }
 
     @Test
-    public void testCreaterWithDelayAndFromStartWithReopen() throws Exception {
+    public void testCreatorWithDelayAndFromStartWithReopen() throws Exception {
         final File file = new File(temporaryFolder, "tailer-create-with-delay-and-from-start-with-reopen.txt");
         createFile(file, 0);
         final TestTailerListener listener = new TestTailerListener(1);
@@ -322,7 +326,7 @@ public class TailerTest {
     }
 
     /*
-     * Tests [IO-357][Tailer] InterruptedException while the thead is sleeping is silently ignored.
+     * Tests [IO-357][Tailer] InterruptedException while the thread is sleeping is silently ignored.
      */
     @Test
     public void testInterrupt() throws Exception {
@@ -541,6 +545,9 @@ public class TailerTest {
             TestUtils.sleep(idle);
         }
         TestUtils.sleep(delay + idle);
+        if (listener.exception != null) {
+            listener.exception.printStackTrace();
+        }
         assertNull(listener.exception, "Should not generate Exception");
         assertEquals(1, listener.initialized, "Expected init to be called");
         assertTrue(listener.notFound > 0, "fileNotFound should be called");
@@ -701,7 +708,7 @@ public class TailerTest {
         final int timeout = 30;
         final TimeUnit timeoutUnit = TimeUnit.SECONDS;
         assertTrue(listener.awaitExpectedLines(timeout, timeoutUnit), () -> String.format("await timed out after %s %s", timeout, timeoutUnit));
-        assertEquals(listener.getLines(), Lists.newArrayList("foo"), "lines");
+        assertEquals(listener.getLines(), Arrays.asList("foo"), "lines");
     }
 
     /** Appends lines to a file */

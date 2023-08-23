@@ -31,6 +31,10 @@ import java.nio.charset.CodingErrorAction;
 import java.util.Objects;
 
 import org.apache.commons.io.Charsets;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.build.AbstractStreamBuilder;
+import org.apache.commons.io.charset.CharsetEncoders;
+import org.apache.commons.io.function.Uncheck;
 
 /**
  * Implements an {@link InputStream} to read from String, StringBuffer, StringBuilder or CharBuffer.
@@ -42,26 +46,113 @@ import org.apache.commons.io.Charsets;
  */
 public class CharSequenceInputStream extends InputStream {
 
-    private static final int BUFFER_SIZE = 2048;
+    /**
+     * Builds a new {@link CharSequenceInputStream} instance.
+     * <p>
+     * For example:
+     * </p>
+     * <h2>Using a Charset</h2>
+     * <pre>{@code
+     * CharSequenceInputStream s = CharSequenceInputStream.builder()
+     *   .setBufferSize(8192)
+     *   .setCharSequence("String")
+     *   .setCharset(Charset.defaultCharset())
+     *   .get();}
+     * </pre>
+     * <h2>Using a CharsetEncoder</h2>
+     * <pre>{@code
+     * CharSequenceInputStream s = CharSequenceInputStream.builder()
+     *   .setBufferSize(8192)
+     *   .setCharSequence("String")
+     *   .setCharsetEncoder(Charset.defaultCharset().newEncoder()
+     *     .onMalformedInput(CodingErrorAction.REPLACE)
+     *     .onUnmappableCharacter(CodingErrorAction.REPLACE))
+     *   .get();}
+     * </pre>
+     *
+     * @since 2.13.0
+     */
+    public static class Builder extends AbstractStreamBuilder<CharSequenceInputStream, Builder> {
+
+        private CharsetEncoder charsetEncoder = newEncoder(getCharset());
+
+        /**
+         * Constructs a new instance.
+         * <p>
+         * This builder use the aspects the CharSequence, buffer size, and Charset.
+         * </p>
+         *
+         * @return a new instance.
+         * @throws IllegalArgumentException if the buffer is not large enough to hold a complete character.
+         */
+        @Override
+        public CharSequenceInputStream get() {
+            return Uncheck.get(() -> new CharSequenceInputStream(getCharSequence(), getBufferSize(), charsetEncoder));
+        }
+
+        CharsetEncoder getCharsetEncoder() {
+            return charsetEncoder;
+        }
+
+        @Override
+        public Builder setCharset(final Charset charset) {
+            super.setCharset(charset);
+            charsetEncoder = newEncoder(getCharset());
+            return this;
+        }
+
+        /**
+         * Sets the charset encoder. Assumes that the caller has configured the encoder.
+         *
+         * @param newEncoder the charset encoder.
+         * @return this
+         * @since 2.13.0
+         */
+        public Builder setCharsetEncoder(final CharsetEncoder newEncoder) {
+            charsetEncoder = CharsetEncoders.toCharsetEncoder(newEncoder, () -> newEncoder(getCharsetDefault()));
+            super.setCharset(charsetEncoder.charset());
+            return this;
+        }
+
+    }
 
     private static final int NO_MARK = -1;
 
-    private final CharsetEncoder charsetEncoder;
-    private final CharBuffer cBuf;
-    private final ByteBuffer bBuf;
+    /**
+     * Constructs a new {@link Builder}.
+     *
+     * @return a new {@link Builder}.
+     * @since 2.12.0
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
 
-    private int cBufMark; // position in cBuf
+    private static CharsetEncoder newEncoder(final Charset charset) {
+        // @formatter:off
+        return Charsets.toCharset(charset).newEncoder()
+                .onMalformedInput(CodingErrorAction.REPLACE)
+                .onUnmappableCharacter(CodingErrorAction.REPLACE);
+        // @formatter:on
+    }
+
+    private final ByteBuffer bBuf;
     private int bBufMark; // position in bBuf
+    private final CharBuffer cBuf;
+    private int cBufMark; // position in cBuf
+    private final CharsetEncoder charsetEncoder;
 
     /**
-     * Constructs a new instance with a buffer size of 2048.
+     * Constructs a new instance with a buffer size of {@link IOUtils#DEFAULT_BUFFER_SIZE}.
      *
      * @param cs the input character sequence.
      * @param charset the character set name to use.
      * @throws IllegalArgumentException if the buffer is not large enough to hold a complete character.
+     * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
+    @Deprecated
     public CharSequenceInputStream(final CharSequence cs, final Charset charset) {
-        this(cs, charset, BUFFER_SIZE);
+        this(cs, charset, IOUtils.DEFAULT_BUFFER_SIZE);
     }
 
     /**
@@ -71,13 +162,17 @@ public class CharSequenceInputStream extends InputStream {
      * @param charset the character set name to use, null maps to the default Charset.
      * @param bufferSize the buffer size to use.
      * @throws IllegalArgumentException if the buffer is not large enough to hold a complete character.
+     * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
+    @Deprecated
     public CharSequenceInputStream(final CharSequence cs, final Charset charset, final int bufferSize) {
         // @formatter:off
-        this.charsetEncoder = Charsets.toCharset(charset).newEncoder()
-            .onMalformedInput(CodingErrorAction.REPLACE)
-            .onUnmappableCharacter(CodingErrorAction.REPLACE);
+        this(cs, bufferSize, newEncoder(charset));
         // @formatter:on
+    }
+
+    private CharSequenceInputStream(final CharSequence cs, final int bufferSize, final CharsetEncoder charsetEncoder) {
+        this.charsetEncoder = charsetEncoder;
         // Ensure that buffer is long enough to hold a complete character
         this.bBuf = ByteBuffer.allocate(ReaderInputStream.checkMinBufferSize(charsetEncoder, bufferSize));
         this.bBuf.flip();
@@ -87,14 +182,16 @@ public class CharSequenceInputStream extends InputStream {
     }
 
     /**
-     * Constructs a new instance with a buffer size of 2048.
+     * Constructs a new instance with a buffer size of {@link IOUtils#DEFAULT_BUFFER_SIZE}.
      *
      * @param cs the input character sequence.
      * @param charset the character set name to use.
      * @throws IllegalArgumentException if the buffer is not large enough to hold a complete character.
+     * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
+    @Deprecated
     public CharSequenceInputStream(final CharSequence cs, final String charset) {
-        this(cs, charset, BUFFER_SIZE);
+        this(cs, charset, IOUtils.DEFAULT_BUFFER_SIZE);
     }
 
     /**
@@ -104,7 +201,9 @@ public class CharSequenceInputStream extends InputStream {
      * @param charset the character set name to use, null maps to the default Charset.
      * @param bufferSize the buffer size to use.
      * @throws IllegalArgumentException if the buffer is not large enough to hold a complete character.
+     * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
+    @Deprecated
     public CharSequenceInputStream(final CharSequence cs, final String charset, final int bufferSize) {
         this(cs, Charsets.toCharset(charset), bufferSize);
     }
@@ -119,7 +218,7 @@ public class CharSequenceInputStream extends InputStream {
     public int available() throws IOException {
         // The cached entries are in bBuf; since encoding always creates at least one byte
         // per character, we can add the two to get a better estimate (e.g. if bBuf is empty)
-        // Note that the previous implementation (2.4) could return zero even though there were
+        // Note that the implementation in 2.4 could return zero even though there were
         // encoded bytes still available.
         return this.bBuf.remaining() + this.cBuf.remaining();
     }
@@ -227,7 +326,7 @@ public class CharSequenceInputStream extends InputStream {
         //
         // Since the bBuf is re-used, in general it's necessary to re-encode the data.
         //
-        // It should be possible to apply some optimisations however:
+        // It should be possible to apply some optimizations however:
         // + use mark/reset on the cBuf and bBuf. This would only work if the buffer had not been (re)filled since
         // the mark. The code would have to catch InvalidMarkException - does not seem possible to check if mark is
         // valid otherwise. + Try saving the state of the cBuf before each fillBuffer; it might be possible to
@@ -240,7 +339,7 @@ public class CharSequenceInputStream extends InputStream {
                 this.cBuf.rewind();
                 this.bBuf.rewind();
                 this.bBuf.limit(0); // rewind does not clear the buffer
-                while(this.cBuf.position() < this.cBufMark) {
+                while (this.cBuf.position() < this.cBufMark) {
                     this.bBuf.rewind(); // empty the buffer (we only refill when empty during normal processing)
                     this.bBuf.limit(0);
                     fillBuffer();

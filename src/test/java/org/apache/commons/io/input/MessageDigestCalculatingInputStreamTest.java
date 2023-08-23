@@ -42,8 +42,16 @@ public class MessageDigestCalculatingInputStreamTest {
             final byte[] buffer = generateRandomByteStream(i);
             final MessageDigest messageDigest = MessageDigestCalculatingInputStream.getDefaultMessageDigest();
             final byte[] expect = messageDigest.digest(buffer);
-            try (MessageDigestCalculatingInputStream messageDigestInputStream = new MessageDigestCalculatingInputStream(
-                new ByteArrayInputStream(buffer))) {
+            try (MessageDigestCalculatingInputStream messageDigestInputStream = new MessageDigestCalculatingInputStream(new ByteArrayInputStream(buffer))) {
+                messageDigestInputStream.consume();
+                assertArrayEquals(expect, messageDigestInputStream.getMessageDigest().digest());
+            }
+            try (MessageDigestCalculatingInputStream messageDigestInputStream = MessageDigestCalculatingInputStream.builder()
+                    .setInputStream(new ByteArrayInputStream(buffer)).get()) {
+                messageDigestInputStream.consume();
+                assertArrayEquals(expect, messageDigestInputStream.getMessageDigest().digest());
+            }
+            try (MessageDigestCalculatingInputStream messageDigestInputStream = MessageDigestCalculatingInputStream.builder().setByteArray(buffer).get()) {
                 messageDigestInputStream.consume();
                 assertArrayEquals(expect, messageDigestInputStream.getMessageDigest().digest());
             }

@@ -19,6 +19,7 @@ package org.apache.commons.io.function;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.function.Supplier;
 
 /**
  * Unchecks calls by throwing {@link UncheckedIOException} instead of {@link IOException}.
@@ -200,6 +201,89 @@ public final class Uncheck {
     }
 
     /**
+     * Gets the result from an IO supplier.
+     *
+     * @param <T> the return type of the operations.
+     * @param supplier Supplies the return value.
+     * @param message The UncheckedIOException message if an I/O error occurs.
+     * @return result from the supplier.
+     * @throws UncheckedIOException if an I/O error occurs.
+     */
+    public static <T> T get(final IOSupplier<T> supplier, final Supplier<String> message) {
+        try {
+            return supplier.get();
+        } catch (final IOException e) {
+            throw wrap(e, message);
+        }
+    }
+
+    /**
+     * Gets the result from an IO int supplier.
+     *
+     * @param supplier Supplies the return value.
+     * @return result from the supplier.
+     * @throws UncheckedIOException if an I/O error occurs.
+     * @since 2.14.0
+     */
+    public static int getAsInt(final IOIntSupplier supplier) {
+        try {
+            return supplier.getAsInt();
+        } catch (final IOException e) {
+            throw wrap(e);
+        }
+    }
+
+    /**
+     * Gets the result from an IO int supplier.
+     *
+     * @param supplier Supplies the return value.
+     * @param message The UncheckedIOException message if an I/O error occurs.
+     * @return result from the supplier.
+     * @throws UncheckedIOException if an I/O error occurs.
+     * @since 2.14.0
+     */
+    public static int getAsInt(final IOIntSupplier supplier, final Supplier<String> message) {
+        try {
+            return supplier.getAsInt();
+        } catch (final IOException e) {
+            throw wrap(e, message);
+        }
+    }
+
+    /**
+     * Gets the result from an IO long supplier.
+     *
+     * @param supplier Supplies the return value.
+     * @return result from the supplier.
+     * @throws UncheckedIOException if an I/O error occurs.
+     * @since 2.14.0
+     */
+    public static long getAsLong(final IOLongSupplier supplier) {
+        try {
+            return supplier.getAsLong();
+        } catch (final IOException e) {
+            throw wrap(e);
+        }
+    }
+
+    /**
+     * Gets the result from an IO long supplier.
+     *
+     * @param supplier Supplies the return value.
+     * @param message The UncheckedIOException message if an I/O error occurs.
+     * @return result from the supplier.
+     * @throws UncheckedIOException if an I/O error occurs.
+     * @since 2.14.0
+     */
+    public static long getAsLong(final IOLongSupplier supplier, final Supplier<String> message) {
+        try {
+            return supplier.getAsLong();
+        } catch (final IOException e) {
+            throw wrap(e, message);
+        }
+    }
+
+    /**
      * Runs an IO runnable.
      *
      * @param runnable The runnable to run.
@@ -210,6 +294,22 @@ public final class Uncheck {
             runnable.run();
         } catch (final IOException e) {
             throw wrap(e);
+        }
+    }
+
+    /**
+     * Runs an IO runnable.
+     *
+     * @param runnable The runnable to run.
+     * @param message The UncheckedIOException message if an I/O error occurs.
+     * @throws UncheckedIOException if an I/O error occurs.
+     * @since 2.14.0
+     */
+    public static void run(final IORunnable runnable, final Supplier<String> message) {
+        try {
+            runnable.run();
+        } catch (final IOException e) {
+            throw wrap(e, message);
         }
     }
 
@@ -230,16 +330,24 @@ public final class Uncheck {
     }
 
     /**
-     * Creates a new UncheckedIOException for the given detail message.
-     * <p>
-     * This method exists because there is no String constructor in {@link UncheckedIOException}.
-     * </p>
+     * Constructs a new UncheckedIOException for the given exception.
      *
      * @param e The exception to wrap.
      * @return a new {@link UncheckedIOException}.
      */
     private static UncheckedIOException wrap(final IOException e) {
         return new UncheckedIOException(e);
+    }
+
+    /**
+     * Constructs a new UncheckedIOException for the given exception and detail message.
+     *
+     * @param e The exception to wrap.
+     * @param message The UncheckedIOException message if an I/O error occurs.
+     * @return a new {@link UncheckedIOException}.
+     */
+    private static UncheckedIOException wrap(final IOException e, final Supplier<String> message) {
+        return new UncheckedIOException(message.get(), e);
     }
 
     /**

@@ -22,37 +22,85 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 
+import org.apache.commons.io.build.AbstractOrigin;
+import org.apache.commons.io.build.AbstractStreamBuilder;
 import org.apache.commons.io.function.Uncheck;
 
 /**
  * A {@link FilterReader} that throws {@link UncheckedIOException} instead of {@link IOException}.
+ * <p>
+ * To build an instance, see {@link Builder}.
+ * </p>
  *
  * @see FilterReader
  * @see IOException
  * @see UncheckedIOException
  * @since 2.12.0
  */
-public class UncheckedFilterReader extends FilterReader {
+public final class UncheckedFilterReader extends FilterReader {
 
     /**
-     * Creates a new filtered reader.
-     *
-     * @param reader a Reader object providing the underlying stream.
-     * @return a new UncheckedFilterReader.
-     * @throws NullPointerException if {@code reader} is {@code null}.
+     * Builds a new {@link UncheckedFilterReader} instance.
+     * <p>
+     * Using File IO:
+     * </p>
+     * <pre>{@code
+     * UncheckedFilterReader s = UncheckedFilterReader.builder()
+     *   .setFile(file)
+     *   .get();}
+     * </pre>
+     * <p>
+     * Using NIO Path:
+     * </p>
+     * <pre>{@code
+     * UncheckedFilterReader s = UncheckedFilterReader.builder()
+     *   .setPath(path)
+     *   .get();}
+     * </pre>
      */
-    public static UncheckedFilterReader on(final Reader reader) {
-        return new UncheckedFilterReader(reader);
+    public static class Builder extends AbstractStreamBuilder<UncheckedFilterReader, Builder> {
+
+        /**
+         * Constructs a new instance.
+         * <p>
+         * This builder use the aspects Reader and Charset.
+         * </p>
+         * <p>
+         * You must provide an origin that can be converted to a Reader by this builder, otherwise, this call will throw an
+         * {@link UnsupportedOperationException}.
+         * </p>
+         *
+         * @return a new instance.
+         * @throws UnsupportedOperationException if the origin cannot provide a Reader.
+         * @throws IllegalStateException if the {@code origin} is {@code null}.
+         * @see AbstractOrigin#getReader(Charset)
+         */
+        @Override
+        public UncheckedFilterReader get() {
+            // This an unchecked class, so this method is as well.
+            return Uncheck.get(() -> new UncheckedFilterReader(checkOrigin().getReader(getCharset())));
+        }
+
     }
 
     /**
-     * Creates a new filtered reader.
+     * Constructs a new {@link Builder}.
+     *
+     * @return a new {@link Builder}.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Constructs a new filtered reader.
      *
      * @param reader a Reader object providing the underlying stream.
      * @throws NullPointerException if {@code reader} is {@code null}.
      */
-    public UncheckedFilterReader(final Reader reader) {
+    private UncheckedFilterReader(final Reader reader) {
         super(reader);
     }
 

@@ -27,7 +27,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.commons.io.input.StringInputStream;
+import org.apache.commons.io.input.CharSequenceInputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.io.test.TestUtils;
 import org.apache.commons.io.test.ThrowOnCloseInputStream;
@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
 @SuppressWarnings("deprecation") // these are test cases for the deprecated CopyUtils
 
 /**
- * JUnit tests for CopyUtils.
+ * Test for {@link CopyUtils}.
  *
  * @see CopyUtils
  */
@@ -101,7 +101,7 @@ public class CopyUtilsTest {
         final String inDataStr = "data";
         final String charsetName = StandardCharsets.UTF_8.name();
         final StringWriter writer = new StringWriter();
-        CopyUtils.copy(new StringInputStream(inDataStr, charsetName), writer, charsetName);
+        CopyUtils.copy(new CharSequenceInputStream.Builder().setCharSequence(inDataStr).setCharset(charsetName).get(), writer, charsetName);
         assertEquals(inDataStr, writer.toString());
     }
 

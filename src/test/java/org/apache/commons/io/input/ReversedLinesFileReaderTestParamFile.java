@@ -85,10 +85,34 @@ public class ReversedLinesFileReaderTestParamFile {
         // @formatter:on
     }
 
+    private void testDataIntegrityWithBufferedReader(final Path filePath, final FileSystem fileSystem, final Charset charset,
+            final ReversedLinesFileReader reversedLinesFileReader) throws IOException {
+        final Stack<String> lineStack = new Stack<>();
+        String line;
+
+        try (BufferedReader bufferedReader = Files.newBufferedReader(filePath, Charsets.toCharset(charset))) {
+            // read all lines in normal order
+            while ((line = bufferedReader.readLine()) != null) {
+                lineStack.push(line);
+            }
+        }
+
+        // read in reverse order and compare with lines from stack
+        while ((line = reversedLinesFileReader.readLine()) != null) {
+            final String lineFromBufferedReader = lineStack.pop();
+            assertEquals(lineFromBufferedReader, line);
+        }
+        assertEquals(0, lineStack.size(), "Stack should be empty");
+
+        if (fileSystem != null) {
+            fileSystem.close();
+        }
+    }
+
     @ParameterizedTest(name = "{0}, encoding={1}, blockSize={2}, useNonDefaultFileSystem={3}, isResource={4}")
     @MethodSource
     public void testDataIntegrityWithBufferedReader(final String fileName, final String charsetName, final Integer blockSize,
-        final boolean useNonDefaultFileSystem, final boolean isResource) throws IOException, URISyntaxException {
+            final boolean useNonDefaultFileSystem, final boolean isResource) throws IOException, URISyntaxException {
 
         Path filePath = isResource ? TestResources.getPath(fileName) : Paths.get(fileName);
         FileSystem fileSystem = null;
@@ -97,31 +121,20 @@ public class ReversedLinesFileReaderTestParamFile {
             filePath = Files.copy(filePath, fileSystem.getPath("/" + fileName));
         }
 
-        // We want to test null Charset in the ReversedLinesFileReaderconstructor.
+        // We want to test null Charset in the ReversedLinesFileReader constructor.
         final Charset charset = charsetName != null ? Charset.forName(charsetName) : null;
         try (ReversedLinesFileReader reversedLinesFileReader = blockSize == null ? new ReversedLinesFileReader(filePath, charset)
-            : new ReversedLinesFileReader(filePath, blockSize, charset)) {
-
-            final Stack<String> lineStack = new Stack<>();
-            String line;
-
-            try (BufferedReader bufferedReader = Files.newBufferedReader(filePath, Charsets.toCharset(charset))) {
-                // read all lines in normal order
-                while ((line = bufferedReader.readLine()) != null) {
-                    lineStack.push(line);
-                }
-            }
-
-            // read in reverse order and compare with lines from stack
-            while ((line = reversedLinesFileReader.readLine()) != null) {
-                final String lineFromBufferedReader = lineStack.pop();
-                assertEquals(lineFromBufferedReader, line);
-            }
-            assertEquals(0, lineStack.size(), "Stack should be empty");
-
-            if (fileSystem != null) {
-                fileSystem.close();
-            }
+                : new ReversedLinesFileReader(filePath, blockSize, charset)) {
+            testDataIntegrityWithBufferedReader(filePath, fileSystem, charset, reversedLinesFileReader);
+        }
+        // @formatter:off
+        try (ReversedLinesFileReader reversedLinesFileReader = ReversedLinesFileReader.builder()
+                .setPath(filePath)
+                .setBufferSize(blockSize)
+                .setCharset(charset)
+                .get()) {
+            // @formatter:on
+            testDataIntegrityWithBufferedReader(filePath, fileSystem, charset, reversedLinesFileReader);
         }
     }
 }

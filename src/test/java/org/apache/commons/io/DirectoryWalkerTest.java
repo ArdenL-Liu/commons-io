@@ -35,10 +35,7 @@ import org.apache.commons.io.filefilter.NameFileFilter;
 import org.junit.jupiter.api.Test;
 
 /**
- * This is used to test DirectoryWalker for correctness.
- *
- * @see DirectoryWalker
- *
+ * Tests {@link DirectoryWalker}.
  */
 public class DirectoryWalkerTest {
 
@@ -50,7 +47,7 @@ public class DirectoryWalkerTest {
         private final String cancelFileName;
         private final boolean suppressCancel;
 
-        TestCancelWalker(final String cancelFileName,final boolean suppressCancel) {
+        TestCancelWalker(final String cancelFileName, final boolean suppressCancel) {
             this.cancelFileName = cancelFileName;
             this.suppressCancel = suppressCancel;
         }

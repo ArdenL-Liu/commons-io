@@ -44,7 +44,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -88,9 +90,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * This is used to test FileUtils for correctness.
- *
- * @see FileUtils
+ * Tests {@link FileUtils}.
  */
 @SuppressWarnings({"deprecation", "ResultOfMethodCallIgnored"}) // unit tests include tests of many deprecated methods
 public class FileUtilsTest extends AbstractTempDirTest {
@@ -140,13 +140,13 @@ public class FileUtilsTest extends AbstractTempDirTest {
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
 
     /** Test data. */
-    private static final long DATE3 = 1000000002000L;
+    private static final long DATE3 = 1_000_000_002_000L;
 
     /** Test data. */
-    private static final long DATE2 = 1000000001000L;
+    private static final long DATE2 = 1_000_000_001_000L;
 
     /** Test data. */
-    private static final long DATE1 = 1000000000000L;
+    private static final long DATE1 = 1_000_000_000_000L;
 
     /**
      * Size of test directory.
@@ -265,7 +265,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
         return files.stream().map(f -> {
             try {
                 return f.getCanonicalPath();
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         }).collect(Collectors.toSet());
@@ -410,6 +410,13 @@ public class FileUtilsTest extends AbstractTempDirTest {
         assertThrows(IllegalArgumentException.class, () -> FileUtils.openOutputStream(directory));
     }
 
+    /**
+     * Requires admin privileges on Windows.
+     *
+     * @throws Exception For example java.nio.file.FileSystemException:
+     *                   C:\Users\you\AppData\Local\Temp\junit2324629522183300191\FileUtilsTest8613879743106252609\symlinked-dir: A required privilege is
+     *                   not held by the client.
+     */
     @Test
     public void test_openOutputStream_intoExistingSymlinkedDir() throws Exception {
         final Path symlinkedDir = createTempSymlinkedRelativeDir();
@@ -504,7 +511,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
         assertEquals("1 GB", FileUtils.byteCountToDisplaySize(1024 * 1024 * 1024));
         assertEquals("1 GB", FileUtils.byteCountToDisplaySize(1024 * 1024 * 1025));
         assertEquals("2 GB", FileUtils.byteCountToDisplaySize(1024L * 1024 * 1024 * 2));
-        assertEquals("1 GB", FileUtils.byteCountToDisplaySize(1024 * 1024 * 1024 * 2 - 1));
+        assertEquals("1 GB", FileUtils.byteCountToDisplaySize(1024L * 1024 * 1024 * 2 - 1));
         assertEquals("1 TB", FileUtils.byteCountToDisplaySize(1024L * 1024 * 1024 * 1024));
         assertEquals("1 PB", FileUtils.byteCountToDisplaySize(1024L * 1024 * 1024 * 1024 * 1024));
         assertEquals("1 EB", FileUtils.byteCountToDisplaySize(1024L * 1024 * 1024 * 1024 * 1024 * 1024));
@@ -529,7 +536,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
         assertEquals("1 GB", FileUtils.byteCountToDisplaySize(Long.valueOf(1024 * 1024 * 1024)));
         assertEquals("1 GB", FileUtils.byteCountToDisplaySize(Long.valueOf(1024 * 1024 * 1025)));
         assertEquals("2 GB", FileUtils.byteCountToDisplaySize(Long.valueOf(1024L * 1024 * 1024 * 2)));
-        assertEquals("1 GB", FileUtils.byteCountToDisplaySize(Long.valueOf(1024 * 1024 * 1024 * 2 - 1)));
+        assertEquals("1 GB", FileUtils.byteCountToDisplaySize(Long.valueOf(1024L * 1024 * 1024 * 2 - 1)));
         assertEquals("1 TB", FileUtils.byteCountToDisplaySize(Long.valueOf(1024L * 1024 * 1024 * 1024)));
         assertEquals("1 PB", FileUtils.byteCountToDisplaySize(Long.valueOf(1024L * 1024 * 1024 * 1024 * 1024)));
         assertEquals("1 EB", FileUtils.byteCountToDisplaySize(Long.valueOf(1024L * 1024 * 1024 * 1024 * 1024 * 1024)));
@@ -848,6 +855,18 @@ public class FileUtilsTest extends AbstractTempDirTest {
         if (!SystemUtils.IS_OS_WINDOWS) {
             assertNotEquals(DATE3, getLastModifiedMillis(targetFile));
         }
+
+        // Test permission of copied file match destination folder
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            final Set<PosixFilePermission> parentPerms = Files.getPosixFilePermissions(target.getParentFile().toPath());
+            final Set<PosixFilePermission> targetPerms = Files.getPosixFilePermissions(target.toPath());
+            assertEquals(parentPerms, targetPerms);
+        } else {
+            final AclFileAttributeView parentView = Files.getFileAttributeView(target.getParentFile().toPath(), AclFileAttributeView.class);
+            final AclFileAttributeView targetView = Files.getFileAttributeView(target.toPath(), AclFileAttributeView.class);
+            assertEquals(parentView.getAcl(), targetView.getAcl());
+        }
+
         FileUtils.deleteDirectory(target);
 
         // Test with preserveFileDate enabled
@@ -1329,6 +1348,14 @@ public class FileUtilsTest extends AbstractTempDirTest {
     }
 
     @Test
+    public void testCreateParentDirectories() throws IOException {
+        // If a directory already exists, nothing happens.
+        FileUtils.createParentDirectories(FileUtils.current());
+        // null is a noop
+        FileUtils.createParentDirectories(null);
+    }
+
+    @Test
     public void testDecodeUrl() {
         assertEquals("", FileUtils.decodeUrl(""));
         assertEquals("foo", FileUtils.decodeUrl("foo"));
@@ -1738,7 +1765,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
         assertFalse(FileUtils.isFileNewer(newFile, localDatePlusDay), "New File - Newer - LocalDate plus one day");
         assertFalse(FileUtils.isFileNewer(newFile, localDatePlusDay, localTime0), "New File - Newer - LocalDate plus one day,LocalTime");
         assertFalse(FileUtils.isFileNewer(newFile, localDatePlusDay, offsetTime0), "New File - Newer - LocalDate plus one day,OffsetTime");
-        assertFalse(FileUtils.isFileNewer(invalidFile, refFile), "Invalid - Newer - File");
+        assertFalse(FileUtils.isFileNewer(invalidFile, refFile), "Illegal - Newer - File");
         assertThrows(IllegalArgumentException.class, () -> FileUtils.isFileNewer(newFile, invalidFile));
 
         // Test isFileOlder()
@@ -1772,7 +1799,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
         assertTrue(FileUtils.isFileOlder(newFile, localDatePlusDay, localTime0), "New File - Older - LocalDate plus one day,LocalTime");
         assertTrue(FileUtils.isFileOlder(newFile, localDatePlusDay, offsetTime0), "New File - Older - LocalDate plus one day,OffsetTime");
 
-        assertFalse(FileUtils.isFileOlder(invalidFile, refFile), "Invalid - Older - File");
+        assertFalse(FileUtils.isFileOlder(invalidFile, refFile), "Illegal - Older - File");
         assertThrows(IllegalArgumentException.class, () -> FileUtils.isFileOlder(newFile, invalidFile));
 
         // Null File
@@ -1841,7 +1868,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
             final String notSubSubFileName = "not.txt";
             TestUtils.generateTestData(new File(notSubSubDir, notSubSubFileName), 1);
 
-            final WildcardFileFilter allFilesFileFilter = new WildcardFileFilter("*.*");
+            final WildcardFileFilter allFilesFileFilter = WildcardFileFilter.builder().setWildcards("*.*").get();
             final NameFileFilter dirFilter = new NameFileFilter("subSubDir");
             iterator = FileUtils.iterateFiles(subDir, allFilesFileFilter, dirFilter);
 
@@ -1890,9 +1917,9 @@ public class FileUtilsTest extends AbstractTempDirTest {
         assertTrue(subDir3.mkdir());
         assertTrue(subDir4.mkdir());
         final File someFile = new File(subDir2, "a.txt");
-        final WildcardFileFilter fileFilterAllFiles = new WildcardFileFilter("*.*");
-        final WildcardFileFilter fileFilterAllDirs = new WildcardFileFilter("*");
-        final WildcardFileFilter fileFilterExtTxt = new WildcardFileFilter("*.txt");
+        final WildcardFileFilter fileFilterAllFiles =  WildcardFileFilter.builder().setWildcards("*.*").get();
+        final WildcardFileFilter fileFilterAllDirs = WildcardFileFilter.builder().setWildcards("*").get();
+        final WildcardFileFilter fileFilterExtTxt = WildcardFileFilter.builder().setWildcards("*.txt").get();
         try {
             try (OutputStream output = new BufferedOutputStream(Files.newOutputStream(someFile.toPath()))) {
                 TestUtils.generateTestData(output, 100);
@@ -1929,7 +1956,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
         assertTrue(new File(directory, "TEST").mkdir());
         assertTrue(new File(directory, "test.txt").createNewFile());
 
-        final IOFileFilter filter = new WildcardFileFilter("*", IOCase.INSENSITIVE);
+        final IOFileFilter filter = WildcardFileFilter.builder().setWildcards("*").setIoCase(IOCase.INSENSITIVE).get();
         FileUtils.iterateFiles(directory, filter, null).forEachRemaining(file -> assertFalse(file.isDirectory(), file::getAbsolutePath));
     }
 
@@ -1942,8 +1969,8 @@ public class FileUtilsTest extends AbstractTempDirTest {
         subDir2.mkdir();
         try {
 
-            final String[] expectedFileNames = {"a.txt", "b.txt", "c.txt", "d.txt", "e.txt", "f.txt"};
-            final int[] fileSizes = {123, 234, 345, 456, 678, 789};
+            final String[] expectedFileNames = { "a.txt", "b.txt", "c.txt", "d.txt", "e.txt", "f.txt" };
+            final int[] fileSizes = { 123, 234, 345, 456, 678, 789 };
 
             for (int i = 0; i < expectedFileNames.length; ++i) {
                 final File theFile = new File(subDir, expectedFileNames[i]);
@@ -1955,7 +1982,11 @@ public class FileUtilsTest extends AbstractTempDirTest {
                 }
             }
 
-            final Collection<File> actualFiles = FileUtils.listFiles(subDir, new WildcardFileFilter("*.*"), new WildcardFileFilter("*"));
+            // @formatter:off
+            final Collection<File> actualFiles = FileUtils.listFiles(subDir,
+                    WildcardFileFilter.builder().setWildcards("*.*").get(),
+                    WildcardFileFilter.builder().setWildcards("*").get());
+            // @formatter:on
 
             final int count = actualFiles.size();
             final Object[] fileObjs = actualFiles.toArray();
@@ -1986,7 +2017,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
         assertTrue(new File(directory, "TEST").mkdir());
         assertTrue(new File(directory, "test.txt").createNewFile());
 
-        final IOFileFilter filter = new WildcardFileFilter("*", IOCase.INSENSITIVE);
+        final IOFileFilter filter = WildcardFileFilter.builder().setWildcards("*").setIoCase(IOCase.INSENSITIVE).get();
         for (final File file : FileUtils.listFiles(directory, filter, null)) {
             assertFalse(file.isDirectory(), file::getAbsolutePath);
         }
@@ -2012,8 +2043,11 @@ public class FileUtilsTest extends AbstractTempDirTest {
             final File subDir3 = new File(subDir2, "subdir3");
             subDir3.mkdir();
 
-            final Collection<File> files = FileUtils.listFilesAndDirs(subDir1, new WildcardFileFilter("*.*"),
-                new WildcardFileFilter("*"));
+            // @formatter:off
+            final Collection<File> files = FileUtils.listFilesAndDirs(subDir1,
+                    WildcardFileFilter.builder().setWildcards("*.*").get(),
+                    WildcardFileFilter.builder().setWildcards("*").get());
+            // @formatter:on
 
             assertEquals(4, files.size());
             assertTrue(files.contains(subDir1), "Should contain the directory.");
@@ -2067,7 +2101,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
     public void testMoveDirectory_Errors() throws Exception {
         assertThrows(NullPointerException.class, () -> FileUtils.moveDirectory(null, new File("foo")));
         assertThrows(NullPointerException.class, () -> FileUtils.moveDirectory(new File("foo"), null));
-        assertThrows(FileNotFoundException.class, () -> FileUtils.moveDirectory(new File("nonexistant"), new File("foo")));
+        assertThrows(FileNotFoundException.class, () -> FileUtils.moveDirectory(new File("non-existent"), new File("foo")));
 
         final File testFile = new File(tempDirFile, "testMoveDirectoryFile");
         if (!testFile.getParentFile().exists()) {
@@ -2167,8 +2201,8 @@ public class FileUtilsTest extends AbstractTempDirTest {
         }
         assertThrows(IOException.class, () -> FileUtils.moveDirectoryToDirectory(testFile1, testFile2, true));
 
-        final File nonexistant = new File(tempDirFile, "testMoveFileNonExistant");
-        assertThrows(IOException.class, () -> FileUtils.moveDirectoryToDirectory(testFile1, nonexistant, false));
+        final File nonExistent = new File(tempDirFile, "testMoveFileNonExistent");
+        assertThrows(IOException.class, () -> FileUtils.moveDirectoryToDirectory(testFile1, nonExistent, false));
     }
 
     @Test
@@ -2282,7 +2316,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
     public void testMoveFile_Errors() throws Exception {
         assertThrows(NullPointerException.class, () -> FileUtils.moveFile(null, new File("foo")));
         assertThrows(NullPointerException.class, () -> FileUtils.moveFile(new File("foo"), null));
-        assertThrows(FileNotFoundException.class, () -> FileUtils.moveFile(new File("nonexistant"), new File("foo")));
+        assertThrows(FileNotFoundException.class, () -> FileUtils.moveFile(new File("non-existent"), new File("foo")));
         assertThrows(IllegalArgumentException.class, () -> FileUtils.moveFile(tempDirFile, new File("foo")));
         final File testSourceFile = new File(tempDirFile, "testMoveFileSource");
         final File testDestFile = new File(tempDirFile, "testMoveFileSource");
@@ -2350,8 +2384,8 @@ public class FileUtilsTest extends AbstractTempDirTest {
         }
         assertThrows(IllegalArgumentException.class, () -> FileUtils.moveFileToDirectory(testFile1, testFile2, true));
 
-        final File nonexistant = new File(tempDirFile, "testMoveFileNonExistant");
-        assertThrows(IOException.class, () -> FileUtils.moveFileToDirectory(testFile1, nonexistant, false));
+        final File nonExistent = new File(tempDirFile, "testMoveFileNonExistent");
+        assertThrows(IOException.class, () -> FileUtils.moveFileToDirectory(testFile1, nonExistent, false));
     }
 
     @Test
@@ -2392,9 +2426,9 @@ public class FileUtilsTest extends AbstractTempDirTest {
     public void testMoveToDirectory_Errors() throws Exception {
         assertThrows(NullPointerException.class, () -> FileUtils.moveDirectoryToDirectory(null, new File("foo"), true));
         assertThrows(NullPointerException.class, () -> FileUtils.moveDirectoryToDirectory(new File("foo"), null, true));
-        final File nonexistant = new File(tempDirFile, "nonexistant");
+        final File nonExistent = new File(tempDirFile, "non-existent");
         final File destDir = new File(tempDirFile, "MoveToDirectoryDestDir");
-        assertThrows(IOException.class, () -> FileUtils.moveToDirectory(nonexistant, destDir, true), "Expected IOException when source does not exist");
+        assertThrows(IOException.class, () -> FileUtils.moveToDirectory(nonExistent, destDir, true), "Expected IOException when source does not exist");
 
     }
 
@@ -2492,6 +2526,13 @@ public class FileUtilsTest extends AbstractTempDirTest {
                 "Unexpected directory size");
     }
 
+    /**
+     * Requires admin privileges on Windows.
+     *
+     * @throws Exception For example java.nio.file.FileSystemException:
+     *                   C:\Users\you\AppData\Local\Temp\junit2324629522183300191\FileUtilsTest8613879743106252609\symlinked-dir: A required privilege is
+     *                   not held by the client.
+     */
     @Test
     public void testSizeOfDirectory() throws Exception {
         final File file = new File(tempDirFile, getName());
@@ -2517,6 +2558,13 @@ public class FileUtilsTest extends AbstractTempDirTest {
         assertEquals(TEST_DIRECTORY_SIZE, FileUtils.sizeOfDirectory(file), "Unexpected directory size");
     }
 
+    /**
+     * Requires admin privileges on Windows.
+     *
+     * @throws Exception For example java.nio.file.FileSystemException:
+     *                   C:\Users\you\AppData\Local\Temp\junit2324629522183300191\FileUtilsTest8613879743106252609\symlinked-dir: A required privilege is
+     *                   not held by the client.
+     */
     @Test
     public void testSizeOfDirectoryAsBigInteger() throws Exception {
         final File file = new File(tempDirFile, getName());
@@ -2544,7 +2592,7 @@ public class FileUtilsTest extends AbstractTempDirTest {
         file.delete();
         file.mkdir();
 
-        final File nonEmptyFile = new File(file, "nonEmptyFile" + System.nanoTime());
+        final File nonEmptyFile = new File(file, "non-emptyFile" + System.nanoTime());
         assertTrue(nonEmptyFile.getParentFile().exists(), () -> "Cannot create file " + nonEmptyFile + " as the parent directory does not exist");
         final OutputStream output = new BufferedOutputStream(Files.newOutputStream(nonEmptyFile.toPath()));
         try {
@@ -2679,6 +2727,19 @@ public class FileUtilsTest extends AbstractTempDirTest {
         final int delta = 3000;
         assertTrue(getLastModifiedMillis(file) >= nowMillis - delta, "FileUtils.touch() changed lastModified to more than now-3s");
         assertTrue(getLastModifiedMillis(file) <= nowMillis + delta, "FileUtils.touch() changed lastModified to less than now+3s");
+    }
+
+    @Test
+    public void testTouchDirDoesNotExist() throws Exception {
+        final File file = new File("target/does-not-exist", "touchme.txt");
+        final File parentDir = file.getParentFile();
+        file.delete();
+        parentDir.delete();
+        assertFalse(parentDir.exists());
+        assertFalse(file.exists());
+        FileUtils.touch(file);
+        assertTrue(parentDir.exists());
+        assertTrue(file.exists());
     }
 
     @Test
@@ -3031,6 +3092,13 @@ public class FileUtilsTest extends AbstractTempDirTest {
         TestUtils.assertEqualContent(text, file);
     }
 
+    /**
+     * Requires admin privileges on Windows.
+     *
+     * @throws Exception For example java.nio.file.FileSystemException:
+     *                   C:\Users\you\AppData\Local\Temp\junit2324629522183300191\FileUtilsTest8613879743106252609\symlinked-dir: A required privilege is
+     *                   not held by the client.
+     */
     @Test
     public void testWriteStringToFileIntoSymlinkedDir() throws Exception {
         final Path symlinkDir = createTempSymlinkedRelativeDir();

@@ -98,21 +98,21 @@ public class XmlStreamReader extends Reader {
             Pattern.MULTILINE);
 
     private static final MessageFormat RAW_EX_1 = new MessageFormat(
-            "Invalid encoding, BOM [{0}] XML guess [{1}] XML prolog [{2}] encoding mismatch");
+            "Illegal encoding, BOM [{0}] XML guess [{1}] XML prolog [{2}] encoding mismatch");
 
     private static final MessageFormat RAW_EX_2 = new MessageFormat(
-            "Invalid encoding, BOM [{0}] XML guess [{1}] XML prolog [{2}] unknown BOM");
+            "Illegal encoding, BOM [{0}] XML guess [{1}] XML prolog [{2}] unknown BOM");
 
     private static final MessageFormat HTTP_EX_1 = new MessageFormat(
-            "Invalid encoding, CT-MIME [{0}] CT-Enc [{1}] BOM [{2}] XML guess [{3}] XML prolog [{4}], BOM must be NULL");
+            "Illegal encoding, CT-MIME [{0}] CT-Enc [{1}] BOM [{2}] XML guess [{3}] XML prolog [{4}], BOM must be null");
 
     private static final MessageFormat HTTP_EX_2 = new MessageFormat(
-            "Invalid encoding, CT-MIME [{0}] CT-Enc [{1}] BOM [{2}] XML guess [{3}] XML prolog [{4}], encoding mismatch");
+            "Illegal encoding, CT-MIME [{0}] CT-Enc [{1}] BOM [{2}] XML guess [{3}] XML prolog [{4}], encoding mismatch");
 
     private static final MessageFormat HTTP_EX_3 = new MessageFormat(
-            "Invalid encoding, CT-MIME [{0}] CT-Enc [{1}] BOM [{2}] XML guess [{3}] XML prolog [{4}], Invalid MIME");
+            "Illegal encoding, CT-MIME [{0}] CT-Enc [{1}] BOM [{2}] XML guess [{3}] XML prolog [{4}], Illegal MIME");
 
-    // returns the BOM in the stream, NULL if not present,
+    // returns the BOM in the stream, null if not present,
     // if there was BOM the in the stream it is consumed
     static String getBOMEncoding(final BufferedInputStream is)
             throws IOException {
@@ -141,8 +141,8 @@ public class XmlStreamReader extends Reader {
         return encoding;
     }
 
-    // returns charset parameter value, NULL if not present, NULL if
-    // httpContentType is NULL
+    // returns charset parameter value, null if not present, null if
+    // httpContentType is null
     static String getContentTypeEncoding(final String httpContentType) {
         String encoding = null;
         if (httpContentType != null) {
@@ -157,7 +157,7 @@ public class XmlStreamReader extends Reader {
         return encoding;
     }
 
-    // returns MIME type or NULL if httpContentType is NULL
+    // returns MIME type or null if httpContentType is null
     static String getContentTypeMime(final String httpContentType) {
         String mime = null;
         if (httpContentType != null) {
@@ -172,7 +172,7 @@ public class XmlStreamReader extends Reader {
      * Returns the default encoding to use if none is set in HTTP content-type,
      * XML prolog and the rules based on content-type are not adequate.
      * <p>
-     * If it is NULL the content-type based rules are used.
+     * If it is null the content-type based rules are used.
      *
      * @return the default encoding to use.
      */
@@ -209,7 +209,7 @@ public class XmlStreamReader extends Reader {
         return encoding;
     }
 
-    // returns the encoding declared in the <?xml encoding=...?>, NULL if none
+    // returns the encoding declared in the <?xml encoding=...?>, null if none
     private static String getXmlProlog(final BufferedInputStream is, final String guessedEnc)
             throws IOException {
         String encoding = null;
@@ -278,9 +278,9 @@ public class XmlStreamReader extends Reader {
      * Sets the default encoding to use if none is set in HTTP content-type, XML
      * prolog and the rules based on content-type are not adequate.
      * <p>
-     * If it is set to NULL the content-type based rules are used.
+     * If it is set to null the content-type based rules are used.
      * <p>
-     * By default it is NULL.
+     * By default it is null.
      *
      * @param encoding charset encoding to default to.
      */
@@ -351,7 +351,7 @@ public class XmlStreamReader extends Reader {
      *        relaxed.
      * @throws IOException thrown if there is a problem reading the stream.
      * @throws XmlStreamReaderException thrown if the charset encoding could not
-     *         be determined according to the specs.
+     *         be determined according to the specification.
      */
     public XmlStreamReader(final InputStream inputStream, final boolean lenient) throws IOException,
             XmlStreamReaderException {
@@ -419,7 +419,7 @@ public class XmlStreamReader extends Reader {
      *        relaxed.
      * @throws IOException thrown if there is a problem reading the file.
      * @throws XmlStreamReaderException thrown if the charset encoding could not
-     *         be determined according to the specs.
+     *         be determined according to the specification.
      */
     public XmlStreamReader(final InputStream inputStream, final String httpContentType,
             final boolean lenient) throws IOException, XmlStreamReaderException {
@@ -458,7 +458,7 @@ public class XmlStreamReader extends Reader {
      * @param defaultEncoding the default encoding to use
      * @throws IOException thrown if there is a problem reading the file.
      * @throws XmlStreamReaderException thrown if the charset encoding could not
-     *         be determined according to the specs.
+     *         be determined according to the specification.
      */
     public XmlStreamReader(final InputStream inputStream, final String httpContentType,
             final boolean lenient, final String defaultEncoding) throws IOException,
@@ -518,14 +518,7 @@ public class XmlStreamReader extends Reader {
     public XmlStreamReader(final URLConnection conn) throws IOException {
         defaultEncoding = staticDefaultEncoding;
         final boolean lenient = true;
-        if (conn instanceof HttpURLConnection) {
-            try {
-                doHttpStream(conn.getInputStream(), conn.getContentType(),
-                        lenient);
-            } catch (final XmlStreamReaderException ex) {
-                doLenientDetection(conn.getContentType(), ex);
-            }
-        } else if (conn.getContentType() != null) {
+        if (conn instanceof HttpURLConnection || conn.getContentType() != null) {
             try {
                 doHttpStream(conn.getInputStream(), conn.getContentType(),
                         lenient);

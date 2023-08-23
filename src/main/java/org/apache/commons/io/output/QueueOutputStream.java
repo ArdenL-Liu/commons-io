@@ -74,13 +74,13 @@ public class QueueOutputStream extends OutputStream {
     }
 
     /**
-     * Creates a new QueueInputStream instance connected to this. Writes to this output stream will be visible to the
+     * Constructs a new QueueInputStream instance connected to this. Writes to this output stream will be visible to the
      * input stream.
      *
      * @return QueueInputStream connected to this stream
      */
     public QueueInputStream newQueueInputStream() {
-        return new QueueInputStream(blockingQueue);
+        return QueueInputStream.builder().setBlockingQueue(blockingQueue).get();
     }
 
     /**

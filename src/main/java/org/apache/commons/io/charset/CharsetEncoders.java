@@ -19,13 +19,14 @@ package org.apache.commons.io.charset;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.function.Supplier;
 
 /**
  * Works with {@link CharsetEncoder}.
  *
  * @since 2.12.0
  */
-public class CharsetEncoders {
+public final class CharsetEncoders {
 
     /**
      * Returns the given non-null CharsetEncoder or a new default CharsetEncoder.
@@ -34,7 +35,19 @@ public class CharsetEncoders {
      * @return the given non-null CharsetEncoder or a new default CharsetEncoder.
      */
     public static CharsetEncoder toCharsetEncoder(final CharsetEncoder charsetEncoder) {
-        return charsetEncoder != null ? charsetEncoder : Charset.defaultCharset().newEncoder();
+        return toCharsetEncoder(charsetEncoder, () -> Charset.defaultCharset().newEncoder());
+    }
+
+    /**
+     * Returns the given non-null CharsetEncoder or a new default CharsetEncoder.
+     *
+     * @param charsetEncoder The CharsetEncoder to test.
+     * @param defaultSupplier The CharsetEncoder supplier to get when charsetEncoder is null.
+     * @return the given non-null CharsetEncoder or a new default CharsetEncoder.
+     * @since 2.13.0
+     */
+    public static CharsetEncoder toCharsetEncoder(final CharsetEncoder charsetEncoder, final Supplier<CharsetEncoder> defaultSupplier) {
+        return charsetEncoder != null ? charsetEncoder : defaultSupplier.get();
     }
 
     /** No instances. */

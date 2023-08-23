@@ -25,15 +25,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Random;
 
+import org.apache.commons.io.input.CharSequenceInputStream;
 import org.apache.commons.io.input.DemuxInputStream;
-import org.apache.commons.io.input.StringInputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.io.output.DemuxOutputStream;
 import org.apache.commons.io.test.TestUtils;
 import org.junit.jupiter.api.Test;
 
 /**
- * Basic unit tests for the multiplexing streams.
+ * Tests {@link DemuxInputStream}.
  */
 public class DemuxInputStreamTest {
 
@@ -140,7 +140,7 @@ public class DemuxInputStreamTest {
     }
 
     private void startReader(final String name, final String data, final DemuxInputStream demux) {
-        final InputStream input = new StringInputStream(data);
+        final InputStream input = CharSequenceInputStream.builder().setCharSequence(data).get();
         final ReaderThread thread = new ReaderThread(name, input, demux);
         threadMap.put(name, thread);
     }

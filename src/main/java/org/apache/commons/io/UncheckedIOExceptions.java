@@ -26,10 +26,10 @@ import java.util.Objects;
  *
  * @since 2.12.0
  */
-class UncheckedIOExceptions {
+final class UncheckedIOExceptions {
 
     /**
-     * Creates a new UncheckedIOException for the given detail message.
+     * Constructs a new UncheckedIOException for the given detail message.
      * <p>
      * This method exists because there is no String constructor in {@link UncheckedIOException}.
      * </p>
@@ -43,7 +43,7 @@ class UncheckedIOExceptions {
     }
 
     /**
-     * Creates a new UncheckedIOException for the given detail message.
+     * Constructs a new UncheckedIOException for the given detail message.
      * <p>
      * This method exists because there is no String constructor in {@link UncheckedIOException}.
      * </p>

@@ -211,25 +211,10 @@ public class IOStreamTest {
 
     @SuppressWarnings("resource") // custom stream not recognized by compiler warning machinery
     @Test
-    public void testForEachIOConsumerOfQsuperT() throws IOException {
-        // compile vs type
-        assertThrows(IOException.class, () -> IOStream.of("A").forEach(TestUtils.throwingIOConsumer()));
-        // compile vs inlnine
-        assertThrows(IOException.class, () -> IOStream.of("A").forEach(e -> {
-            throw new IOException("Failure");
-        }));
-        assertThrows(IOException.class, () -> IOStream.of("A", "B").forEach(TestUtils.throwingIOConsumer()));
-        final StringBuilder sb = new StringBuilder();
-        IOStream.of("A", "B").forEachOrdered(sb::append);
-        assertEquals("AB", sb.toString());
-    }
-
-    @SuppressWarnings("resource") // custom stream not recognized by compiler warning machinery
-    @Test
     public void testForaAllIOConsumer() throws IOException {
         // compile vs type
         assertThrows(IOException.class, () -> IOStream.of("A").forAll(TestUtils.throwingIOConsumer()));
-        // compile vs inlnine
+        // compile vs inline
         assertThrows(IOException.class, () -> IOStream.of("A").forAll(e -> {
             throw new IOException("Failure");
         }));
@@ -244,7 +229,7 @@ public class IOStreamTest {
     public void testForaAllIOConsumerBiFunction() throws IOException {
         // compile vs type
         assertThrows(IOException.class, () -> IOStream.of("A").forAll(TestUtils.throwingIOConsumer(), (i, e) -> e));
-        // compile vs inlnine
+        // compile vs inline
         assertThrows(IOException.class, () -> IOStream.of("A").forAll(e -> {
             throw new IOException("Failure");
         }, (i, e) -> e));
@@ -259,7 +244,7 @@ public class IOStreamTest {
     public void testForaAllIOConsumerBiFunctionNull() throws IOException {
         // compile vs type
         assertDoesNotThrow(() -> IOStream.of("A").forAll(TestUtils.throwingIOConsumer(), null));
-        // compile vs inlnine
+        // compile vs inline
         assertDoesNotThrow(() -> IOStream.of("A").forAll(e -> {
             throw new IOException("Failure");
         }, null));
@@ -271,10 +256,25 @@ public class IOStreamTest {
 
     @SuppressWarnings("resource") // custom stream not recognized by compiler warning machinery
     @Test
+    public void testForEachIOConsumerOfQsuperT() throws IOException {
+        // compile vs type
+        assertThrows(IOException.class, () -> IOStream.of("A").forEach(TestUtils.throwingIOConsumer()));
+        // compile vs inline
+        assertThrows(IOException.class, () -> IOStream.of("A").forEach(e -> {
+            throw new IOException("Failure");
+        }));
+        assertThrows(IOException.class, () -> IOStream.of("A", "B").forEach(TestUtils.throwingIOConsumer()));
+        final StringBuilder sb = new StringBuilder();
+        IOStream.of("A", "B").forEachOrdered(sb::append);
+        assertEquals("AB", sb.toString());
+    }
+
+    @SuppressWarnings("resource") // custom stream not recognized by compiler warning machinery
+    @Test
     public void testForEachOrdered() throws IOException {
         // compile vs type
         assertThrows(IOException.class, () -> IOStream.of("A").forEach(TestUtils.throwingIOConsumer()));
-        // compile vs inlnine
+        // compile vs inline
         assertThrows(IOException.class, () -> IOStream.of("A").forEach(e -> {
             throw new IOException("Failure");
         }));
@@ -376,12 +376,6 @@ public class IOStreamTest {
 
     @SuppressWarnings("resource") // custom stream not recognized by compiler warning machinery
     @Test
-    public void testOfOne() {
-        assertEquals(1, IOStream.of("A").count());
-    }
-
-    @SuppressWarnings("resource") // custom stream not recognized by compiler warning machinery
-    @Test
     public void testOfIterable() {
         assertEquals(0, IOStream.of((Iterable<?>) null).count());
         assertEquals(0, IOStream.of(Collections.emptyList()).count());
@@ -389,6 +383,12 @@ public class IOStreamTest {
         assertEquals(0, IOStream.of(Collections.emptySortedSet()).count());
         assertEquals(1, IOStream.of(Arrays.asList("a")).count());
         assertEquals(2, IOStream.of(Arrays.asList("a", "b")).count());
+    }
+
+    @SuppressWarnings("resource") // custom stream not recognized by compiler warning machinery
+    @Test
+    public void testOfOne() {
+        assertEquals(1, IOStream.of("A").count());
     }
 
     @SuppressWarnings("resource") // custom stream not recognized by compiler warning machinery

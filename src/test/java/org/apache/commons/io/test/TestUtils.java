@@ -132,7 +132,7 @@ public abstract class TestUtils {
                 while (-1 != n0) {
                     n0 = is0.read(buf0);
                     n1 = is1.read(buf1);
-                    assertTrue(n0 == n1,
+                    assertEquals(n0, n1,
                             "The files " + f0 + " and " + f1 +
                             " have differing number of bytes available (" + n0 + " vs " + n1 + ")");
 
@@ -164,14 +164,20 @@ public abstract class TestUtils {
         }
     }
 
-    public static void createFile(final File file, final long size)
-            throws IOException {
+    public static void createFile(final File file, final long size) throws IOException {
         if (!file.getParentFile().exists()) {
-            throw new IOException("Cannot create file " + file
-                    + " as the parent directory does not exist");
+            throw new IOException("Cannot create file " + file + " as the parent directory does not exist");
         }
-        try (BufferedOutputStream output =
-                new BufferedOutputStream(Files.newOutputStream(file.toPath()))) {
+        try (BufferedOutputStream output = new BufferedOutputStream(Files.newOutputStream(file.toPath()))) {
+            generateTestData(output, size);
+        }
+    }
+
+    public static void createFile(final Path file, final long size) throws IOException {
+        if (!Files.exists(file.getParent())) {
+            throw new IOException("Cannot create file " + file + " as the parent directory does not exist");
+        }
+        try (BufferedOutputStream output = new BufferedOutputStream(Files.newOutputStream(file))) {
             generateTestData(output, size);
         }
     }

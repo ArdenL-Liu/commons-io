@@ -17,6 +17,7 @@ import static org.apache.commons.io.IOUtils.EOF;
 
 // import javax.annotation.concurrent.GuardedBy;
 import java.io.EOFException;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -29,41 +30,107 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.io.build.AbstractStreamBuilder;
+
 /**
- * Implements {@link InputStream} to asynchronously read ahead from an underlying input stream when a specified amount
- * of data has been read from the current buffer. It does so by maintaining two buffers: an active buffer and a read
- * ahead buffer. The active buffer contains data which should be returned when a read() call is issued. The read ahead
- * buffer is used to asynchronously read from the underlying input stream. When the current active buffer is exhausted,
- * we flip the two buffers so that we can start reading from the read ahead buffer without being blocked by disk I/O.
+ * Implements {@link InputStream} to asynchronously read ahead from an underlying input stream when a specified amount of data has been read from the current
+ * buffer. It does so by maintaining two buffers: an active buffer and a read ahead buffer. The active buffer contains data which should be returned when a
+ * read() call is issued. The read ahead buffer is used to asynchronously read from the underlying input stream. When the current active buffer is exhausted, we
+ * flip the two buffers so that we can start reading from the read ahead buffer without being blocked by disk I/O.
+ * <p>
+ * To build an instance, see {@link Builder}.
+ * </p>
  * <p>
  * This class was ported and adapted from Apache Spark commit 933dc6cb7b3de1d8ccaf73d124d6eb95b947ed19.
  * </p>
  *
  * @since 2.9.0
  */
-public class ReadAheadInputStream extends InputStream {
+public class ReadAheadInputStream extends FilterInputStream {
+
+    /**
+     * Builds a new {@link ReadAheadInputStream} instance.
+     * <p>
+     * For example:
+     * </p>
+     * <pre>{@code
+     * ReadAheadInputStream s = ReadAheadInputStream.builder()
+     *   .setPath(path)
+     *   .setExecutorService(Executors.newSingleThreadExecutor(ReadAheadInputStream::newThread))
+     *   .get();}
+     * </pre>
+     *
+     * @since 2.12.0
+     */
+    public static class Builder extends AbstractStreamBuilder<ReadAheadInputStream, Builder> {
+
+        private ExecutorService executorService;
+
+        /**
+         * Constructs a new instance.
+         * <p>
+         * This builder use the aspects InputStream, OpenOption[], buffer size, ExecutorService.
+         * </p>
+         * <p>
+         * You must provide an origin that can be converted to an InputStream by this builder, otherwise, this call will throw an
+         * {@link UnsupportedOperationException}.
+         * </p>
+         *
+         * @return a new instance.
+         * @throws UnsupportedOperationException if the origin cannot provide an InputStream.
+         * @see #getInputStream()
+         */
+        @SuppressWarnings("resource")
+        @Override
+        public ReadAheadInputStream get() throws IOException {
+            return new ReadAheadInputStream(getInputStream(), getBufferSize(), executorService != null ? executorService : newExecutorService(),
+                    executorService == null);
+        }
+
+        /**
+         * Sets the executor service for the read-ahead thread.
+         *
+         * @param executorService the executor service for the read-ahead thread.
+         * @return this
+         */
+        public Builder setExecutorService(final ExecutorService executorService) {
+            this.executorService = executorService;
+            return this;
+        }
+
+    }
 
     private static final ThreadLocal<byte[]> BYTE_ARRAY_1 = ThreadLocal.withInitial(() -> new byte[1]);
 
     /**
-     * Creates a new daemon executor service.
+     * Constructs a new {@link Builder}.
      *
-     * @return a new daemon executor service.
+     * @return a new {@link Builder}.
+     * @since 2.12.0
      */
-    private static ExecutorService newExecutorService() {
-        return Executors.newSingleThreadExecutor(ReadAheadInputStream::newThread);
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
-     * Creates a new daemon thread.
+     * Constructs a new daemon thread.
      *
      * @param r the thread's runnable.
      * @return a new daemon thread.
      */
-    private static Thread newThread(final Runnable r) {
+    private static Thread newDaemonThread(final Runnable r) {
         final Thread thread = new Thread(r, "commons-io-read-ahead");
         thread.setDaemon(true);
         return thread;
+    }
+
+    /**
+     * Constructs a new daemon executor service.
+     *
+     * @return a new daemon executor service.
+     */
+    private static ExecutorService newExecutorService() {
+        return Executors.newSingleThreadExecutor(ReadAheadInputStream::newDaemonThread);
     }
 
     private final ReentrantLock stateChangeLock = new ReentrantLock();
@@ -104,8 +171,6 @@ public class ReadAheadInputStream extends InputStream {
     // Whether there is a reader waiting for data.
     private final AtomicBoolean isWaiting = new AtomicBoolean(false);
 
-    private final InputStream underlyingInputStream;
-
     private final ExecutorService executorService;
 
     private final boolean shutdownExecutorService;
@@ -113,42 +178,45 @@ public class ReadAheadInputStream extends InputStream {
     private final Condition asyncReadComplete = stateChangeLock.newCondition();
 
     /**
-     * Creates an instance with the specified buffer size and read-ahead threshold
+     * Constructs an instance with the specified buffer size and read-ahead threshold
      *
-     * @param inputStream The underlying input stream.
+     * @param inputStream       The underlying input stream.
      * @param bufferSizeInBytes The buffer size.
+     * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
+    @Deprecated
     public ReadAheadInputStream(final InputStream inputStream, final int bufferSizeInBytes) {
         this(inputStream, bufferSizeInBytes, newExecutorService(), true);
     }
 
     /**
-     * Creates an instance with the specified buffer size and read-ahead threshold
+     * Constructs an instance with the specified buffer size and read-ahead threshold
      *
-     * @param inputStream The underlying input stream.
+     * @param inputStream       The underlying input stream.
      * @param bufferSizeInBytes The buffer size.
-     * @param executorService An executor service for the read-ahead thread.
+     * @param executorService   An executor service for the read-ahead thread.
+     * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
-    public ReadAheadInputStream(final InputStream inputStream, final int bufferSizeInBytes,
-        final ExecutorService executorService) {
+    @Deprecated
+    public ReadAheadInputStream(final InputStream inputStream, final int bufferSizeInBytes, final ExecutorService executorService) {
         this(inputStream, bufferSizeInBytes, executorService, false);
     }
 
     /**
-     * Creates an instance with the specified buffer size and read-ahead threshold
+     * Constructs an instance with the specified buffer size and read-ahead threshold
      *
-     * @param inputStream The underlying input stream.
-     * @param bufferSizeInBytes The buffer size.
-     * @param executorService An executor service for the read-ahead thread.
+     * @param inputStream             The underlying input stream.
+     * @param bufferSizeInBytes       The buffer size.
+     * @param executorService         An executor service for the read-ahead thread.
      * @param shutdownExecutorService Whether or not to shut down the given ExecutorService on close.
      */
-    private ReadAheadInputStream(final InputStream inputStream, final int bufferSizeInBytes,
-        final ExecutorService executorService, final boolean shutdownExecutorService) {
+    private ReadAheadInputStream(final InputStream inputStream, final int bufferSizeInBytes, final ExecutorService executorService,
+            final boolean shutdownExecutorService) {
+        super(Objects.requireNonNull(inputStream, "inputStream"));
         if (bufferSizeInBytes <= 0) {
             throw new IllegalArgumentException("bufferSizeInBytes should be greater than 0, but the value is " + bufferSizeInBytes);
         }
         this.executorService = Objects.requireNonNull(executorService, "executorService");
-        this.underlyingInputStream = Objects.requireNonNull(inputStream, "inputStream");
         this.shutdownExecutorService = shutdownExecutorService;
         this.activeBuffer = ByteBuffer.allocate(bufferSizeInBytes);
         this.readAheadBuffer = ByteBuffer.allocate(bufferSizeInBytes);
@@ -205,7 +273,7 @@ public class ReadAheadInputStream extends InputStream {
                 throw iio;
             } finally {
                 if (isSafeToCloseUnderlyingInputStream) {
-                    underlyingInputStream.close();
+                    super.close();
                 }
             }
         }
@@ -225,7 +293,7 @@ public class ReadAheadInputStream extends InputStream {
         }
         if (needToCloseUnderlyingInputStream) {
             try {
-                underlyingInputStream.close();
+                super.close();
             } catch (final IOException ignored) {
                 // TODO Rethrow as UncheckedIOException?
             }
@@ -243,6 +311,7 @@ public class ReadAheadInputStream extends InputStream {
             return activeBuffer.get() & 0xFF;
         }
         final byte[] oneByteArray = BYTE_ARRAY_1.get();
+        oneByteArray[0] = 0;
         return read(oneByteArray, 0, 1) == EOF ? EOF : oneByteArray[0] & 0xFF;
     }
 
@@ -332,7 +401,7 @@ public class ReadAheadInputStream extends InputStream {
                 // try to fill the read ahead buffer.
                 // if a reader is waiting, possibly return early.
                 do {
-                    read = underlyingInputStream.read(arr, off, len);
+                    read = in.read(arr, off, len);
                     if (read <= 0) {
                         break;
                     }
@@ -396,8 +465,8 @@ public class ReadAheadInputStream extends InputStream {
     }
 
     /**
-     * Internal skip function which should be called only from skip(). The assumption is that the stateChangeLock is
-     * already acquired in the caller before calling this function.
+     * Internal skip function which should be called only from skip(). The assumption is that the stateChangeLock is already acquired in the caller before
+     * calling this function.
      *
      * @param n the number of bytes to be skipped.
      * @return the actual number of bytes skipped.
@@ -429,7 +498,7 @@ public class ReadAheadInputStream extends InputStream {
         activeBuffer.flip();
         readAheadBuffer.position(0);
         readAheadBuffer.flip();
-        final long skippedFromInputStream = underlyingInputStream.skip(toSkip);
+        final long skippedFromInputStream = in.skip(toSkip);
         readAsync();
         return skippedBytes + skippedFromInputStream;
     }
